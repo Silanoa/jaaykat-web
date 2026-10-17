@@ -26,7 +26,7 @@ export function SessionListener() {
 
 export function SandboxBanner() {
   return (
-    <p className="bg-accent/20 px-4 py-1 text-center text-xs font-medium text-ink">Mode démo · sandbox, aucune somme réelle</p>
+    <p className="mb-3 bg-accent/20 px-4 pt-[max(4px,env(safe-area-inset-top))] pb-1 text-center text-xs font-medium text-ink">Mode démo · sandbox, aucune somme réelle</p>
   );
 }
 

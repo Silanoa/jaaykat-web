@@ -75,12 +75,13 @@ export function ChargePage() {
       <div>
       <h1 className="mb-2 text-[28px] leading-[34px] font-bold">Encaisser</h1>
       <AmountReadout value={amount} />
-      {rates.isFetching ? <p className="text-center text-sm text-muted">Mise à jour du taux…</p> : null}
+      <div className="min-h-5 text-center text-sm text-muted">
       {rates.data ? (
-        <p className="text-center text-sm text-muted">
+        <p>
           Taux indicatif : 1 BTC = {formatXof(rates.data.btcXof)}
         </p>
       ) : null}
+      </div>
       <div className="my-3 flex flex-wrap gap-2">
         {quick.map((value) => (
           <button
@@ -114,7 +115,7 @@ export function ChargePage() {
         </p>
         {merchant?.qrUrl ? (
           <div className="mt-4">
-            <QrImage value={merchant.qrUrl} label="QR permanent" className="mx-auto size-[360px]" />
+            <QrImage value={merchant.qrUrl} label="QR permanent" className="mx-auto aspect-square w-full max-w-[360px]" />
           </div>
         ) : (
           <p className="mt-4 text-sm">Aucun QR permanent renvoyé par le compte.</p>

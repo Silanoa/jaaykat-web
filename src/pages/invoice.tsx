@@ -87,7 +87,7 @@ export function InvoicePage() {
             <Skeleton className="h-5 w-24" />
           </div>
           <div className="mt-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0">
-            <Skeleton className="mx-auto size-[240px] lg:size-[360px]" />
+            <Skeleton className="mx-auto aspect-square w-full max-w-[240px] lg:max-w-[360px]" />
           </div>
         </div>
       </Page>
@@ -114,6 +114,7 @@ export function InvoicePage() {
         amountSats={invoice.amountSats}
         paidAt={invoice.paidAt}
         subject={invoice.label}
+        subjectLabel="Libellé"
         proof={
           invoice.paymentHash
             ? { kind: "Preuve", value: invoice.paymentHash }
@@ -158,7 +159,7 @@ export function InvoicePage() {
           {invoice.label ? <p className="text-center text-sm lg:text-left">{invoice.label}</p> : null}
         </div>
         <div className={`mt-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 ${invoice.status === "expired" ? "opacity-40" : ""}`}>
-          <QrImage value={qrValue} label="QR de la facture" className="mx-auto size-[240px] lg:size-[360px]" />
+          <QrImage value={qrValue} label="QR de la facture" className="mx-auto aspect-square w-full max-w-[240px] lg:max-w-[360px]" />
           <p role="status" aria-live="polite" className="mt-4 min-h-6 text-center font-medium">
             {wait.label}
           </p>

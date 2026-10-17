@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { UpdatedAgo } from "../components/updated-ago";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Heatmap } from "../components/heatmap";
@@ -62,7 +63,7 @@ export function SalesPage() {
   return (
     <Page title="Ventes">
       <ShopHeader />
-      <div className="mb-4 grid grid-cols-3 gap-2">
+      <div className="mb-1 grid grid-cols-3 gap-2">
         {(["today", "7d", "30d"] as const).map((key) => (
           <button
             key={key}
@@ -162,7 +163,7 @@ function SalesTable({ items, onOpen }: { items: SaleItem[]; onOpen: (id: string)
           {items.map((item) => (
             <tr key={item.id} className="border-b border-black/5 last:border-0">
               <td className="px-3 py-3">
-                <button type="button" className="tabular font-semibold" onClick={() => onOpen(item.id)}>
+                <button type="button" className="tabular -my-3 inline-flex min-h-12 min-w-12 items-center font-semibold" onClick={() => onOpen(item.id)}>
                   {formatXof(item.amountXof)}
                 </button>
               </td>
@@ -216,11 +217,13 @@ export function DashboardPage() {
       return dashboard;
     },
     refetchInterval: online ? 10_000 : false,
+    placeholderData: keepPreviousData,
   });
   const sales = useQuery({
     queryKey: ["sales", bounds.from, bounds.to],
     queryFn: () => api.sales(bounds.from, bounds.to),
     enabled: desktop,
+    placeholderData: keepPreviousData,
   });
   const score = useQuery({
     queryKey: ["score"],
@@ -252,6 +255,9 @@ export function DashboardPage() {
           </button>
         ))}
       </div>
+      <p className="mb-3 min-h-5 text-right">
+        <UpdatedAgo at={query.dataUpdatedAt} />
+      </p>
       {state === "loading" ? (
         <div className="grid gap-3">
           <Skeleton className="h-24" />
@@ -261,7 +267,7 @@ export function DashboardPage() {
       {state === "offline" ? <ErrorState message="Hors ligne : aucune donnée en cache." /> : null}
       {state === "error" ? <ErrorState message={messageOf(query.error)} onRetry={() => void query.refetch()} /> : null}
       {state === "ready" && data ? (
-        <div className="flex flex-col gap-4">
+        <div className="jk-fade-in flex flex-col gap-4">
           {data.kpis.salesCount < 5 ? (
             <p className="rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
               Encore peu de ventes pour lire une tendance.
@@ -442,7 +448,7 @@ export function ScorePage() {
               const copy = COMPONENT_COPY[component.key];
               return (
                 <li key={component.key}>
-                  <button type="button" className="w-full text-left" onClick={() => setOpen(component.key)}>
+                  <button type="button" className="min-h-12 w-full text-left" onClick={() => setOpen(component.key)}>
                     <span className="flex justify-between text-sm">
                       <span>{copy.label}</span>
                       <span className="text-muted">{copy.weight}</span>
