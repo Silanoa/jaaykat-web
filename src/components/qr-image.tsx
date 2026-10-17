@@ -5,7 +5,7 @@ import { Skeleton } from "./ui";
 export function QrImage({
   value,
   label,
-  className = "mx-auto size-[240px]",
+  className = "mx-auto aspect-square w-full max-w-[240px]",
 }: {
   value: string | null;
   label: string;
