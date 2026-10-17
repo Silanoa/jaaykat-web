@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Heatmap } from "../components/heatmap";
 import { ScoreGauge } from "../components/score-gauge";
 import { ShopHeader } from "../components/shell";
 import { Button, EmptyState, ErrorState, Page, Skeleton } from "../components/ui";
+import { useDesktop } from "../hooks/useDesktop";
 import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
@@ -91,7 +92,10 @@ export function SalesPage() {
       {state === "ready" ? (
         <div>
           <p className="tabular mb-3 text-lg font-semibold">Total payé {formatXof(total)}</p>
-          <SaleGroups items={items} onOpen={(id) => setParams({ range, vente: id })} />
+          <div className="lg:hidden">
+            <SaleGroups items={items} onOpen={(id) => setParams({ range, vente: id })} />
+          </div>
+          <SalesTable items={items} onOpen={(id) => setParams({ range, vente: id })} />
         </div>
       ) : null}
       {selected ? (
@@ -139,10 +143,46 @@ function SaleGroups({ items, onOpen }: { items: SaleItem[]; onOpen: (id: string)
   );
 }
 
+function SalesTable({ items, onOpen }: { items: SaleItem[]; onOpen: (id: string) => void }) {
+  return (
+    <div className="hidden overflow-x-auto rounded-xl bg-surface lg:block">
+      <table className="w-full text-left text-sm">
+        <caption className="sr-only">Ventes de la période</caption>
+        <thead className="border-b border-black/10 text-muted">
+          <tr>
+            <th className="px-3 py-3 font-medium">Montant</th>
+            <th className="px-3 py-3 font-medium">Heure</th>
+            <th className="px-3 py-3 font-medium">Statut</th>
+            <th className="px-3 py-3 font-medium">Canal</th>
+            <th className="px-3 py-3 font-medium">Client</th>
+            <th className="px-3 py-3 font-medium">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id} className="border-b border-black/5 last:border-0">
+              <td className="px-3 py-3">
+                <button type="button" className="tabular font-semibold" onClick={() => onOpen(item.id)}>
+                  {formatXof(item.amountXof)}
+                </button>
+              </td>
+              <td className="px-3 py-3">{formatWhen(item.paidAt ?? item.createdAt)}</td>
+              <td className="px-3 py-3">{invoiceBadge(item.status)}</td>
+              <td className="px-3 py-3">{channelLabel(item.channel)}</td>
+              <td className="px-3 py-3">{item.payerNickname ?? "—"}</td>
+              <td className="px-3 py-3">{item.source === "seed" ? "Historique simulé" : "En direct"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function SaleSheet({ item, onClose }: { item: SaleItem; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40" role="dialog" aria-modal="true" aria-label="Détail de la vente">
-      <div className="w-full max-w-[480px] rounded-t-[20px] bg-surface p-4 pb-8">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 lg:items-center lg:p-6" role="dialog" aria-modal="true" aria-label="Détail de la vente">
+      <div className="w-full max-w-[480px] rounded-t-[20px] bg-surface p-4 pb-8 lg:rounded-2xl lg:pb-4">
         <h2 className="text-lg font-semibold">Vente</h2>
         <p className="tabular mt-2 text-[28px] font-bold">{formatXof(item.amountXof)}</p>
         {item.amountSats != null ? <p className="text-sm text-muted">{formatSats(item.amountSats)}</p> : null}
@@ -164,7 +204,10 @@ function SaleSheet({ item, onClose }: { item: SaleItem; onClose: () => void }) {
 export function DashboardPage() {
   const api = useApi();
   const online = useOnline();
+  const desktop = useDesktop();
+  const navigate = useNavigate();
   const [range, setRange] = useState<RangeKey>("today");
+  const bounds = rangeBounds(range);
   const query = useQuery({
     queryKey: ["dashboard", range],
     queryFn: async () => {
@@ -173,6 +216,16 @@ export function DashboardPage() {
       return dashboard;
     },
     refetchInterval: online ? 10_000 : false,
+  });
+  const sales = useQuery({
+    queryKey: ["sales", bounds.from, bounds.to],
+    queryFn: () => api.sales(bounds.from, bounds.to),
+    enabled: desktop,
+  });
+  const score = useQuery({
+    queryKey: ["score"],
+    queryFn: () => api.score(),
+    enabled: desktop,
   });
   const state = screenState({
     online,
@@ -214,46 +267,94 @@ export function DashboardPage() {
               Encore peu de ventes pour lire une tendance.
             </p>
           ) : null}
-          <article className="rounded-xl bg-surface p-4 shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
-            <p className="text-sm text-muted">Chiffre d'affaires</p>
-            <p className="tabular text-[32px] leading-10 font-bold">{formatXof(data.kpis.revenueXof)}</p>
-            <p className="text-sm">{formatDelta(data.kpis.revenueDeltaPct) ?? "Pas de comparaison"}</p>
-          </article>
-          <div className="grid grid-cols-2 gap-3">
-            <Kpi label="Ventes" value={String(data.kpis.salesCount)} />
-            <Kpi label="Panier moyen" value={data.kpis.averageBasketXof === null ? "—" : formatXof(data.kpis.averageBasketXof)} />
-            <Kpi label="Taux de paiement" value={formatPercent(data.kpis.conversionRate)} />
-            <Kpi label="Meilleur jour" value={data.kpis.bestDay ?? "—"} />
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-3">
+            <article className="rounded-xl bg-surface p-4 shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+              <p className="text-sm text-muted">Chiffre d'affaires</p>
+              <p className="tabular text-[32px] leading-10 font-bold">{formatXof(data.kpis.revenueXof)}</p>
+              <p className="text-sm">{formatDelta(data.kpis.revenueDeltaPct) ?? "Pas de comparaison"}</p>
+            </article>
+            <div className="grid grid-cols-2 gap-3 lg:contents">
+              <Kpi label="Ventes" value={String(data.kpis.salesCount)} />
+              <Kpi label="Panier moyen" value={data.kpis.averageBasketXof === null ? "—" : formatXof(data.kpis.averageBasketXof)} />
+              <Kpi label="Taux de paiement" value={formatPercent(data.kpis.conversionRate)} />
+              <Kpi label="Meilleur jour" value={data.kpis.bestDay ?? "—"} />
+            </div>
           </div>
           {data.kpis.medianPaySeconds !== null ? (
             <p>Vos clients paient en {Math.round(data.kpis.medianPaySeconds)} s.</p>
           ) : null}
           {data.kpis.peakLabel ? <p>{data.kpis.peakLabel}</p> : null}
-          {data.advice ? (
-            <article className="rounded-xl bg-success-bg p-4">
-              <h2 className="font-semibold">Conseil du jour</h2>
-              <p className="mt-1">{data.advice.text}</p>
-              {data.advice.figures ? <p className="mt-1 text-sm text-muted">{data.advice.figures}</p> : null}
-            </article>
-          ) : null}
-          <section>
-            <h2 className="mb-2 font-semibold">Heures de pointe</h2>
-            <Heatmap cells={data.heatmap} />
-          </section>
-          <section>
-            <h2 className="mb-2 font-semibold">Clients fidèles</h2>
-            {data.loyal.length === 0 ? (
-              <p className="text-sm text-muted">Pas encore de client identifié.</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {data.loyal.map((client) => (
-                  <li key={client.nickname} className="rounded-xl bg-surface px-3 py-2 text-sm">
-                    {client.nickname} · {client.purchases} achats · {formatXof(client.revenueXof)}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
+            {data.advice ? (
+              <article className="rounded-xl bg-success-bg p-4 lg:col-start-2 lg:row-start-1">
+                <h2 className="font-semibold">Conseil du jour</h2>
+                <p className="mt-1">{data.advice.text}</p>
+                {data.advice.figures ? <p className="mt-1 text-sm text-muted">{data.advice.figures}</p> : null}
+              </article>
+            ) : null}
+            <section className="lg:col-start-1 lg:row-start-1 lg:row-span-2">
+              <h2 className="mb-2 font-semibold">Heures de pointe</h2>
+              <Heatmap cells={data.heatmap} />
+            </section>
+            <section className="lg:col-start-2">
+              <h2 className="mb-2 font-semibold">Clients fidèles</h2>
+              {data.loyal.length === 0 ? (
+                <p className="text-sm text-muted">Pas encore de client identifié.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {data.loyal.map((client) => (
+                    <li key={client.nickname} className="rounded-xl bg-surface px-3 py-2 text-sm">
+                      {client.nickname} · {client.purchases} achats · {formatXof(client.revenueXof)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+          <div className="hidden gap-4 lg:grid lg:grid-cols-2">
+            <section className="rounded-xl bg-surface p-4">
+              <h2 className="mb-3 font-semibold">Ventes</h2>
+              {sales.isLoading ? <Skeleton className="h-24" /> : null}
+              {sales.data && sales.data.items.length === 0 ? (
+                <p className="text-sm text-muted">Aucune vente sur cette période.</p>
+              ) : null}
+              {sales.data && sales.data.items.length > 0 ? (
+                <SalesTable items={sales.data.items} onOpen={(id) => navigate(`/app/sales?vente=${id}`)} />
+              ) : null}
+            </section>
+            <section className="rounded-xl bg-surface p-4">
+              <h2 className="font-semibold">Score</h2>
+              {score.isLoading ? <Skeleton className="mt-3 h-24" /> : null}
+              {score.data ? (
+                <div className="mt-3 grid gap-4">
+                  <div>
+                    <ScoreGauge score={score.data.score} band={score.data.band} />
+                    <p className="text-center text-sm text-muted">Score indicatif, non recalculé ici.</p>
+                    <Link to="/app/score" className="mt-2 inline-flex min-h-12 items-center font-semibold text-primary">
+                      Voir le détail
+                    </Link>
+                  </div>
+                  <article className="rounded-xl bg-success-bg p-4">
+                    <h3 className="font-semibold">Attestation</h3>
+                    <p className="mt-1 text-sm">Le lien reprend le score renvoyé par le serveur.</p>
+                    <Button
+                      type="button"
+                      className="mt-3"
+                      disabled={!online || !score.data.eligible}
+                      onClick={() => {
+                        void api.shareScore().then(async (result) => {
+                          await navigator.clipboard.writeText(result.url);
+                          useToast.getState().show("Lien d'attestation copié");
+                        });
+                      }}
+                    >
+                      Partager mon attestation
+                    </Button>
+                  </article>
+                </div>
+              ) : null}
+            </section>
+          </div>
         </div>
       ) : null}
     </Page>
@@ -300,6 +401,7 @@ export function ScorePage() {
   return (
     <Page
       title="Score"
+      actionClassName="lg:hidden"
       action={
         <Button type="button" onClick={() => void share()} disabled={!online || !data?.eligible}>
           Partager mon attestation
@@ -312,7 +414,8 @@ export function ScorePage() {
       {state === "offline" ? <ErrorState message="Hors ligne : aucun score en cache." /> : null}
       {state === "error" ? <ErrorState message={messageOf(query.error)} onRetry={() => void query.refetch()} /> : null}
       {state === "ready" && data ? (
-        <div>
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
+          <div>
           {!data.eligible ? (
             <p className="mb-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
               Score en construction
@@ -323,7 +426,18 @@ export function ScorePage() {
           ) : null}
           <ScoreGauge score={data.score} band={data.band} />
           {data.computedAt ? <p className="text-center text-sm text-muted">Calculé {formatWhen(data.computedAt)}</p> : null}
-          <ul className="mt-4 flex flex-col gap-3">
+          <article className="mt-4 hidden rounded-xl bg-surface p-4 lg:block">
+            <h2 className="font-semibold">Attestation</h2>
+            <p className="mt-1 text-sm text-muted">Lien en lecture seule. Le score affiché est celui du serveur.</p>
+            <div className="mt-3">
+              <Button type="button" onClick={() => void share()} disabled={!online || !data.eligible}>
+                Partager mon attestation
+              </Button>
+            </div>
+          </article>
+          </div>
+          <div>
+          <ul className="mt-4 flex flex-col gap-3 lg:mt-0">
             {data.components.map((component) => {
               const copy = COMPONENT_COPY[component.key];
               return (
@@ -353,6 +467,7 @@ export function ScorePage() {
               </ul>
             </section>
           ) : null}
+          </div>
         </div>
       ) : null}
       {detail && open && data ? (

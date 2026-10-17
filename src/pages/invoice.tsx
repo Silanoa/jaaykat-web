@@ -95,7 +95,7 @@ export function InvoicePage() {
   if (invoice.status === "paid") {
     const proof = invoice.paymentHash ? shortProof(invoice.paymentHash) : shortProof(invoice.id);
     return (
-      <div className="flex min-h-0 flex-1 flex-col bg-primary px-4 py-8 text-white">
+      <div className="flex min-h-0 flex-1 flex-col bg-primary px-4 py-8 text-white lg:mx-auto lg:my-8 lg:max-w-xl lg:flex-none lg:self-center lg:rounded-3xl lg:px-10">
         <p className="text-sm">Paiement simulé · sandbox</p>
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <p className="grid size-20 place-items-center rounded-full bg-white text-4xl text-primary" aria-hidden="true">
@@ -142,27 +142,33 @@ export function InvoicePage() {
     >
       <BackButton to="/app/charge" label="Retour" />
       <h1 className="mb-2 text-[22px] leading-7 font-semibold">Facture</h1>
-      <p className="tabular text-center text-[32px] leading-10 font-bold">{formatXof(invoice.amountXof)}</p>
-      <p className="text-center text-sm text-muted">{formatSats(invoice.amountSats)}</p>
-      {invoice.label ? <p className="text-center text-sm">{invoice.label}</p> : null}
-      <div className={`mt-4 ${invoice.status === "expired" ? "opacity-40" : ""}`}>
-        <QrImage value={qrValue} label="QR de la facture" />
-      </div>
-      <p className="mt-4 text-center font-medium">{wait.label}</p>
-      {clock && waiting ? (
-        <p className={`text-center tabular ${clock.urgent ? "text-warning" : "text-muted"}`}>
-          {clock.expired ? "00:00" : clock.mmss} · expire à {clock.expiresClock}
-        </p>
-      ) : null}
-      {query.isFetching && waiting ? <p className="text-center text-sm text-muted">Vérification…</p> : null}
-      {wait.autoSettle ? <p className="mt-3 text-center text-sm">Confirmation automatique en ~5 s.</p> : null}
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button type="button" variant="secondary" onClick={() => void copyInvoice()} disabled={!qrValue}>
-          Copier
-        </Button>
-        <Button type="button" variant="secondary" onClick={() => void shareInvoice()} disabled={!qrValue}>
-          Partager
-        </Button>
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
+        <div>
+          <p className="tabular text-center text-[32px] leading-10 font-bold lg:text-left lg:text-[40px] lg:leading-[48px]">{formatXof(invoice.amountXof)}</p>
+          <p className="text-center text-sm text-muted lg:text-left">{formatSats(invoice.amountSats)}</p>
+          {invoice.label ? <p className="text-center text-sm lg:text-left">{invoice.label}</p> : null}
+        </div>
+        <div className={`mt-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 ${invoice.status === "expired" ? "opacity-40" : ""}`}>
+          <QrImage value={qrValue} label="QR de la facture" className="mx-auto size-[240px] lg:size-[360px]" />
+          <p className="mt-4 text-center font-medium">{wait.label}</p>
+        </div>
+        <div>
+          {clock && waiting ? (
+            <p className={`text-center tabular lg:text-left ${clock.urgent ? "text-warning" : "text-muted"}`}>
+              {clock.expired ? "00:00" : clock.mmss} · expire à {clock.expiresClock}
+            </p>
+          ) : null}
+          {query.isFetching && waiting ? <p className="text-center text-sm text-muted lg:text-left">Vérification…</p> : null}
+          {wait.autoSettle ? <p className="mt-3 text-center text-sm lg:text-left">Confirmation automatique en ~5 s.</p> : null}
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button type="button" variant="secondary" onClick={() => void copyInvoice()} disabled={!qrValue}>
+              Copier
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => void shareInvoice()} disabled={!qrValue}>
+              Partager
+            </Button>
+          </div>
+        </div>
       </div>
     </Page>
   );
