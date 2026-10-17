@@ -60,19 +60,23 @@ export function Page({
   title,
   children,
   action,
+  actionClassName = "",
 }: {
   title?: string;
   children: ReactNode;
   action?: ReactNode;
+  actionClassName?: string;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 lg:overflow-visible lg:px-8">
         {title ? <h1 className="mb-4 text-[28px] leading-[34px] font-bold">{title}</h1> : null}
         {children}
       </div>
       {action ? (
-        <div className="sticky bottom-0 bg-bg px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">{action}</div>
+        <div className={`sticky bottom-0 bg-bg px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] lg:px-8 ${actionClassName}`}>
+          {action}
+        </div>
       ) : null}
     </div>
   );
