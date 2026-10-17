@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { AmountPad, AmountReadout } from "../components/pads";
@@ -11,10 +11,13 @@ import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
 import { getDeviceId } from "../lib/device";
 import { countdown, formatSats, formatWhen, formatXof } from "../lib/format";
-import { categoryLabel } from "../lib/labels";
+import { categoryLabel, networkLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
-import { invoiceSchema, type Invoice } from "../lib/schemas";
+import { publicPayPhase } from "../lib/pay-demo";
+import { invoiceSchema, type Invoice, type PayoutNetwork } from "../lib/schemas";
 import { isTerminalInvoice, invoiceStatusLabel } from "../lib/status";
+
+const PAY_METHODS: readonly PayoutNetwork[] = ["wave", "orange", "free", "expresso"];
 
 function saveCreated(invoice: Invoice) {
   sessionStorage.setItem(`jk.publicInvoice.${invoice.id}`, JSON.stringify(invoice));
@@ -141,9 +144,15 @@ function ShopCheckout({ slug }: { slug: string }) {
 
 function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const api = useApi();
+  const queryClient = useQueryClient();
   const now = useNow();
+  const online = useOnline();
   const [, setParams] = useSearchParams();
   const created = readCreated(invoiceId);
+  const [chosen, setChosen] = useState<PayoutNetwork | null>(null);
+  const [busyMethod, setBusyMethod] = useState<PayoutNetwork | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const block = postBlockReason("public-invoice", online);
   const shop = useQuery({ queryKey: ["shop", slug], queryFn: () => api.getShop(slug), retry: false });
   const poll = useQuery({
     queryKey: ["public-invoice", invoiceId],
@@ -157,9 +166,27 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const status = poll.data?.status ?? created?.status ?? "creating";
   const amount = poll.data?.amountXof ?? created?.amountXof ?? 0;
   const expiresAt = poll.data?.expiresAt ?? created?.expiresAt ?? null;
+  const demoPayment = Boolean(poll.data?.demoPayment ?? created?.demoPayment);
+  const payMethod = poll.data?.payMethod ?? chosen ?? created?.payMethod ?? null;
+  const phase = publicPayPhase({ status, demoPayment, payMethod });
   const clock = expiresAt ? countdown(expiresAt, now) : null;
 
-  if (status === "paid") {
+  async function choose(method: PayoutNetwork) {
+    if (block || busyMethod) return;
+    setBusyMethod(method);
+    setError(null);
+    try {
+      const result = await api.payPublicInvoice(invoiceId, method);
+      setChosen(result.payMethod ?? method);
+      queryClient.setQueryData(["public-invoice", invoiceId], result);
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Le paiement n'a pas démarré. Réessayez.");
+    } finally {
+      setBusyMethod(null);
+    }
+  }
+
+  if (phase === "paid") {
     return (
       <PublicShell>
         <Page
@@ -181,7 +208,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
     );
   }
 
-  if (status === "expired" || status === "failed") {
+  if (phase === "expired" || phase === "failed") {
     return (
       <PublicShell>
         <Page
@@ -198,33 +225,72 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
     );
   }
 
+  if (phase === "choose") {
+    return (
+      <PublicShell>
+        <Page title={shop.data?.name ?? "Paiement"}>
+          <p className="rounded-lg bg-accent px-3 py-2 text-center text-sm font-medium text-ink">
+            Démo : paiement simulé, aucune somme réelle
+          </p>
+          <p className="tabular mt-4 text-center text-[40px] leading-[48px] font-bold">{formatXof(amount)}</p>
+          <div className="mt-4 grid gap-2">
+            {PAY_METHODS.map((method) => (
+              <Button
+                key={method}
+                type="button"
+                disabled={Boolean(block) || busyMethod !== null}
+                busy={busyMethod === method}
+                onClick={() => void choose(method)}
+              >
+                Payer avec {networkLabel(method)}
+              </Button>
+            ))}
+          </div>
+          {block ? <p className="mt-3 text-sm text-warning">{block}</p> : null}
+          {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+        </Page>
+      </PublicShell>
+    );
+  }
+
+  const manual = demoPayment;
   return (
     <PublicShell>
       <Page title="Paiement en cours">
         <p className="text-sm text-muted">{shop.data?.name}</p>
         <p className="tabular mt-2 text-[32px] font-bold">{formatXof(amount)}</p>
-        {created ? <p className="text-sm text-muted">{formatSats(created.amountSats)}</p> : null}
-        <div className="my-4">
-          <QrImage value={created?.bolt11 ?? null} label="QR de la facture" />
-        </div>
-        <p className="text-center">{invoiceStatusLabel(status)}</p>
+        {created && !manual ? <p className="text-sm text-muted">{formatSats(created.amountSats)}</p> : null}
+        {manual ? (
+          <p className="mt-3 rounded-lg bg-accent px-3 py-2 text-center text-sm font-medium text-ink">
+            Démo : paiement simulé, aucune somme réelle
+          </p>
+        ) : (
+          <div className="my-4">
+            <QrImage value={created?.bolt11 ?? null} label="QR de la facture" />
+          </div>
+        )}
+        <p className="text-center">{payMethod ? networkLabel(payMethod) : invoiceStatusLabel(status)}</p>
         {clock ? (
           <p className="text-center text-sm tabular">
             {clock.mmss} · expire à {clock.expiresClock}
           </p>
         ) : null}
-        <p className="mt-3 text-center text-sm">Paiement simulé · sandbox : confirmation automatique en ~5 s</p>
-        <button
-          type="button"
-          className="mt-4 min-h-12 w-full text-primary"
-          disabled={!created?.bolt11}
-          onClick={() => {
-            if (!created?.bolt11) return;
-            void navigator.clipboard.writeText(created.bolt11);
-          }}
-        >
-          Copier la facture
-        </button>
+        {manual ? null : (
+          <p className="mt-3 text-center text-sm">Paiement simulé · sandbox : confirmation automatique en ~5 s</p>
+        )}
+        {manual ? null : (
+          <button
+            type="button"
+            className="mt-4 min-h-12 w-full text-primary"
+            disabled={!created?.bolt11}
+            onClick={() => {
+              if (!created?.bolt11) return;
+              void navigator.clipboard.writeText(created.bolt11);
+            }}
+          >
+            Copier la facture
+          </button>
+        )}
         {poll.isError ? (
           <p className="mt-2 text-sm text-danger">
             {poll.error instanceof ApiError ? poll.error.message : "Vérification impossible."}{" "}
@@ -253,7 +319,10 @@ function Help({ slug }: { slug: string }) {
           Ce paiement passe par le réseau Bitcoin Lightning. Hors démo, il faut une application de portefeuille
           Lightning. Un compte mobile money ne permet pas de payer cette facture.
         </p>
-        <p className="mt-3">Pendant la démo, le paiement est simulé et se confirme tout seul en quelques secondes.</p>
+        <p className="mt-3">
+          Pendant la démo, aucune somme réelle n'est débitée. Selon la facture, vous choisissez Wave, Orange Money,
+          Free Money ou Expresso, ou la confirmation se fait toute seule.
+        </p>
       </Page>
     </PublicShell>
   );
