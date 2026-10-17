@@ -8,9 +8,30 @@
 - `user` : `{ id, phoneMasked }`
 - `merchant` : `{ id, slug, displayName, category, qrUrl }`
 - Facture : enveloppe `{ invoice }` avec le JSON du contrat (`status`, `amountXof`, `amountSats`, `bolt11`, `expiresAt`, `paidAt`, `label`, `channel`, `source`)
-- `GET /api/public/invoices/:id` : `{ status, amountXof, expiresAt }` seulement. Le QR client vient de la réponse du POST.
+- `GET /api/public/invoices/:id` : au minimum `{ status, amountXof, expiresAt }`. Le QR Lightning client vient de la réponse du POST quand `bolt11` est présent.
 - `GET /api/public/shops/:slug` : `{ name, category }`
 - Devis : enveloppe `{ quote }` ; création : enveloppe `{ payout }` avec corps `{ quoteId }`
+
+## Paiement démo manuel
+
+Mode API `DEMO_PAY_MODE=manual`. Le front ne calcule pas le statut : il affiche `paid` seulement si un GET le renvoie, et il continue de poller toutes les 2 s.
+
+La facture marchand (`POST` et `GET /api/invoices`) et la facture publique créée (`POST /api/public/invoices`, enveloppe `{ invoice }`) ajoutent :
+
+```json
+{
+  "demoPayment": true,
+  "bolt11": null,
+  "payUrl": "https://exemple/p/awa-beaute?facture=inv1",
+  "payMethod": null
+}
+```
+
+`payUrl` est encodé tel quel dans le QR du marchand. Sans `payUrl`, le QR reste le `bolt11`.
+
+`GET /api/public/invoices/:id` ajoute `demoPayment` et `payMethod` (`null` tant que personne n'a payé).
+
+`POST /api/public/invoices/:id/pay` corps `{ "method": "wave" | "orange" | "free" | "expresso" }` → `{ status, amountXof, expiresAt, demoPayment: true, payMethod }`. Pas de clé d'idempotence dans ce contrat. Si la réponse finale de l'API diffère, réaligner `src/lib/schemas.ts` sur elle.
 
 ## Champs supposés, à confirmer côté API
 
