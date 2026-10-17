@@ -108,6 +108,127 @@ describe("états des écrans", () => {
     expect(screen.queryByRole("button", { name: "Nouvelle vente" })).not.toBeInTheDocument();
   });
 
+  it("affiche l'attente client quand la facture a un payUrl", async () => {
+    renderAt(
+      "/app/invoice/inv-demo",
+      routeFetch({
+        "/api/auth/me": () => jsonResponse(200, me),
+        "/api/invoices/inv-demo": () =>
+          jsonResponse(200, {
+            invoice: {
+              ...invoice("pending").invoice,
+              id: "inv-demo",
+              bolt11: null,
+              demoPayment: true,
+              payUrl: "https://demo.example/p/awa-beaute?facture=inv-demo",
+              payMethod: null,
+            },
+          }),
+      }),
+      true,
+    );
+    expect(await screen.findByText("En attente du client")).toBeInTheDocument();
+    expect(screen.queryByText("Confirmation automatique en ~5 s.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Payé" })).not.toBeInTheDocument();
+  });
+
+  it("laisse le client choisir Wave puis affiche reçu seulement après l'API", async () => {
+    let submitted = false;
+    let pollsAfterPay = 0;
+    const user = userEvent.setup();
+    renderAt("/p/awa-beaute?facture=inv-demo", async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
+      if (path === "/api/health") return jsonResponse(200, { ok: true });
+      if (path === "/api/public/shops/awa-beaute") {
+        return jsonResponse(200, { name: "Awa Beauté", category: "beaute" });
+      }
+      if (path === "/api/public/invoices/inv-demo/pay") {
+        const body = JSON.parse(String(init?.body)) as { method?: string };
+        expect(body.method).toBe("wave");
+        submitted = true;
+        return jsonResponse(200, {
+          status: "pending",
+          amountXof: 2500,
+          expiresAt: "2099-01-01T00:15:00.000Z",
+          demoPayment: true,
+          payMethod: "wave",
+        });
+      }
+      if (path === "/api/public/invoices/inv-demo") {
+        if (submitted) pollsAfterPay += 1;
+        const settled = pollsAfterPay > 0;
+        return jsonResponse(200, {
+          status: settled ? "paid" : "pending",
+          amountXof: 2500,
+          expiresAt: "2099-01-01T00:15:00.000Z",
+          demoPayment: true,
+          payMethod: settled ? "wave" : null,
+        });
+      }
+      return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
+    });
+    expect(await screen.findByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
+    expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Payer avec Wave" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Payer avec Orange Money" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Payer avec Free Money" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Payer avec Expresso" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Payer avec Wave" }));
+    expect(await screen.findByRole("heading", { name: "Paiement en cours" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Paiement reçu" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Paiement reçu" }, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it("après la saisie du montant, ouvre le même choix en mode démo", async () => {
+    const user = userEvent.setup();
+    renderAt("/p/awa-beaute", async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
+      if (path === "/api/health") return jsonResponse(200, { ok: true });
+      if (path === "/api/public/shops/awa-beaute") {
+        return jsonResponse(200, { name: "Awa Beauté", category: "beaute" });
+      }
+      if (path === "/api/public/invoices" && (init?.method ?? "GET") === "POST") {
+        return jsonResponse(201, {
+          invoice: {
+            id: "inv-saisie",
+            status: "pending",
+            amountXof: 1500,
+            amountSats: 0,
+            bolt11: null,
+            expiresAt: "2099-01-01T00:15:00.000Z",
+            paidAt: null,
+            label: null,
+            channel: "static_qr",
+            source: "live",
+            demoPayment: true,
+            payUrl: "https://demo.example/p/awa-beaute?facture=inv-saisie",
+            payMethod: null,
+          },
+        });
+      }
+      if (path === "/api/public/invoices/inv-saisie") {
+        return jsonResponse(200, {
+          status: "pending",
+          amountXof: 1500,
+          expiresAt: "2099-01-01T00:15:00.000Z",
+          demoPayment: true,
+          payMethod: null,
+        });
+      }
+      return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
+    });
+    expect(await screen.findByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
+    for (const digit of ["1", "5", "0", "0"]) {
+      await user.click(screen.getByRole("button", { name: new RegExp(`^${digit}$`) }));
+    }
+    await user.click(screen.getByRole("button", { name: "Payer" }));
+    expect(await screen.findByRole("button", { name: "Payer avec Wave" })).toBeInTheDocument();
+    expect(screen.getByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
+  });
+
   it("affiche l'écran payé quand l'API renvoie paid", async () => {
     renderAt(
       "/app/invoice/inv-paid",

@@ -12,7 +12,8 @@ import { beep, celebratePayment, vibratePayment } from "../lib/celebrate";
 import { countdown, formatSats, formatWhen, formatXof } from "../lib/format";
 import { shortProof } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
-import { isTerminalInvoice, invoiceStatusLabel } from "../lib/status";
+import { invoiceQrPayload, merchantWaitCopy } from "../lib/pay-demo";
+import { isTerminalInvoice } from "../lib/status";
 import { useToast } from "../stores/toast";
 
 const seenPayments = new Set<string>();
@@ -52,15 +53,19 @@ export function InvoicePage() {
   }
 
   async function copyInvoice() {
-    if (!query.data?.bolt11) return;
-    await navigator.clipboard.writeText(query.data.bolt11);
+    if (!query.data) return;
+    const payload = invoiceQrPayload(query.data);
+    if (!payload) return;
+    await navigator.clipboard.writeText(payload);
     useToast.getState().show("Facture copiée");
   }
 
   async function shareInvoice() {
-    if (!query.data?.bolt11) return;
+    if (!query.data) return;
+    const payload = invoiceQrPayload(query.data);
+    if (!payload) return;
     if (navigator.share) {
-      await navigator.share({ title: "Facture Jaaykat", text: query.data.bolt11 });
+      await navigator.share({ title: "Facture Jaaykat", text: payload });
       return;
     }
     await copyInvoice();
@@ -85,6 +90,8 @@ export function InvoicePage() {
   }
 
   const invoice = query.data;
+  const qrValue = invoiceQrPayload(invoice);
+  const wait = merchantWaitCopy(invoice);
   if (invoice.status === "paid") {
     const proof = invoice.paymentHash ? shortProof(invoice.paymentHash) : shortProof(invoice.id);
     return (
@@ -139,21 +146,21 @@ export function InvoicePage() {
       <p className="text-center text-sm text-muted">{formatSats(invoice.amountSats)}</p>
       {invoice.label ? <p className="text-center text-sm">{invoice.label}</p> : null}
       <div className={`mt-4 ${invoice.status === "expired" ? "opacity-40" : ""}`}>
-        <QrImage value={invoice.bolt11} label="QR de la facture" />
+        <QrImage value={qrValue} label="QR de la facture" />
       </div>
-      <p className="mt-4 text-center font-medium">{invoiceStatusLabel(invoice.status)}</p>
+      <p className="mt-4 text-center font-medium">{wait.label}</p>
       {clock && waiting ? (
         <p className={`text-center tabular ${clock.urgent ? "text-warning" : "text-muted"}`}>
           {clock.expired ? "00:00" : clock.mmss} · expire à {clock.expiresClock}
         </p>
       ) : null}
       {query.isFetching && waiting ? <p className="text-center text-sm text-muted">Vérification…</p> : null}
-      <p className="mt-3 text-center text-sm">Confirmation automatique en ~5 s.</p>
+      {wait.autoSettle ? <p className="mt-3 text-center text-sm">Confirmation automatique en ~5 s.</p> : null}
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button type="button" variant="secondary" onClick={() => void copyInvoice()} disabled={!invoice.bolt11}>
+        <Button type="button" variant="secondary" onClick={() => void copyInvoice()} disabled={!qrValue}>
           Copier
         </Button>
-        <Button type="button" variant="secondary" onClick={() => void shareInvoice()} disabled={!invoice.bolt11}>
+        <Button type="button" variant="secondary" onClick={() => void shareInvoice()} disabled={!qrValue}>
           Partager
         </Button>
       </div>
