@@ -236,7 +236,9 @@ export type Attestation = z.infer<typeof attestationSchema>;
 export const healthSchema = z.object({
   ok: z.boolean(),
   bitnob: z.boolean().optional(),
+  demoPayMode: z.enum(["auto", "manual"]).optional(),
 });
+export type Health = z.infer<typeof healthSchema>;
 
 export const apiErrorSchema = z.object({
   error: z.string(),

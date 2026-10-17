@@ -6,6 +6,7 @@ import {
   balanceSchema,
   dashboardSchema,
   healthSchema,
+  type Health,
   invoiceSchema,
   meSchema,
   payoutSchema,
@@ -216,7 +217,7 @@ export function createApi(options: {
     system(): Promise<SystemInfo> {
       return request("/api/system", { schema: systemSchema });
     },
-    health(): Promise<{ ok: boolean; bitnob?: boolean }> {
+    health(): Promise<Health> {
       return request("/api/health", { schema: healthSchema });
     },
     attestation(token: string): Promise<Attestation> {

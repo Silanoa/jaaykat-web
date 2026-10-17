@@ -305,6 +305,9 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
 }
 
 function Help({ slug }: { slug: string }) {
+  const api = useApi();
+  const health = useQuery({ queryKey: ["health"], queryFn: () => api.health(), retry: false });
+  const simulated = health.data?.demoPayMode === "manual";
   return (
     <PublicShell>
       <Page
@@ -315,14 +318,22 @@ function Help({ slug }: { slug: string }) {
           </Link>
         }
       >
-        <p>
-          Ce paiement passe par le réseau Bitcoin Lightning. Hors démo, il faut une application de portefeuille
-          Lightning. Un compte mobile money ne permet pas de payer cette facture.
-        </p>
-        <p className="mt-3">
-          Pendant la démo, aucune somme réelle n'est débitée. Selon la facture, vous choisissez Wave, Orange Money,
-          Free Money ou Expresso, ou la confirmation se fait toute seule.
-        </p>
+        {simulated ? (
+          <p>
+            Démo : aucune somme réelle n'est débitée. Après avoir scanné le QR, vous choisissez Wave, Orange Money,
+            Free Money ou Expresso, puis le paiement est simulé.
+          </p>
+        ) : (
+          <>
+            <p>
+              Ce paiement passe par le réseau Bitcoin Lightning. Hors démo, il faut une application de portefeuille
+              Lightning. Un compte mobile money ne permet pas de payer cette facture.
+            </p>
+            <p className="mt-3">
+              Pendant la démo, aucune somme réelle n'est débitée. La confirmation se fait toute seule.
+            </p>
+          </>
+        )}
       </Page>
     </PublicShell>
   );
