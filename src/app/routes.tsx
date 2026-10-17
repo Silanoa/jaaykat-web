@@ -1,22 +1,38 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 import { FocusShell, MerchantShell, SessionListener, ToastViewport } from "../components/shell";
 import { isStandalone } from "../lib/install";
-import { AttestationPage } from "../pages/attestation";
-import { ForgotPage, InstallPage, LoginPage, RegisterPage } from "../pages/auth";
 import { ChargePage } from "../pages/charge";
 import { InvoicePage } from "../pages/invoice";
-import { DashboardPage, SalesPage, ScorePage } from "../pages/lists";
-import { BalancePage, PayoutConfirmPage, PayoutFormPage, PayoutStatusPage, SettingsPage, SystemPage } from "../pages/money";
-import { PayPage } from "../pages/pay";
-import { UniversalQrPage } from "../pages/qr";
 import { useSession } from "../stores/session";
+
+const AttestationPage = lazy(() => import("../pages/attestation").then((m) => ({ default: m.AttestationPage })));
+const ForgotPage = lazy(() => import("../pages/auth").then((m) => ({ default: m.ForgotPage })));
+const InstallPage = lazy(() => import("../pages/auth").then((m) => ({ default: m.InstallPage })));
+const LoginPage = lazy(() => import("../pages/auth").then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("../pages/auth").then((m) => ({ default: m.RegisterPage })));
+const DashboardPage = lazy(() => import("../pages/lists").then((m) => ({ default: m.DashboardPage })));
+const SalesPage = lazy(() => import("../pages/lists").then((m) => ({ default: m.SalesPage })));
+const ScorePage = lazy(() => import("../pages/lists").then((m) => ({ default: m.ScorePage })));
+const BalancePage = lazy(() => import("../pages/money").then((m) => ({ default: m.BalancePage })));
+const PayoutConfirmPage = lazy(() => import("../pages/money").then((m) => ({ default: m.PayoutConfirmPage })));
+const PayoutFormPage = lazy(() => import("../pages/money").then((m) => ({ default: m.PayoutFormPage })));
+const PayoutStatusPage = lazy(() => import("../pages/money").then((m) => ({ default: m.PayoutStatusPage })));
+const SettingsPage = lazy(() => import("../pages/money").then((m) => ({ default: m.SettingsPage })));
+const SystemPage = lazy(() => import("../pages/money").then((m) => ({ default: m.SystemPage })));
+const PayPage = lazy(() => import("../pages/pay").then((m) => ({ default: m.PayPage })));
+const UniversalQrPage = lazy(() => import("../pages/qr").then((m) => ({ default: m.UniversalQrPage })));
+
+function RouteFallback() {
+  return <div className="min-h-dvh bg-bg" aria-hidden="true" />;
+}
 
 export function AppRoutes() {
   return (
     <>
       <SessionListener />
       <ToastViewport />
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<Navigate to="/app" replace />} />
         <Route path="/app" element={<Gate />} />
@@ -46,6 +62,7 @@ export function AppRoutes() {
         <Route path="/s/:token" element={<AttestationPage />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
+      </Suspense>
     </>
   );
 }
