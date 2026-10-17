@@ -37,7 +37,7 @@ bash scripts/sync-web.sh
 
 ## PWA
 
-Manifest `standalone`, français, portrait, icônes 192, 512, maskable et apple-touch. Le service worker précache la coquille et met en cache uniquement les GET `/api/dashboard`, `/api/sales` et `/api/score`. Les POST `/api/invoices` et `/api/payouts` ne sont ni cachés ni rejoués. Hors ligne, les boutons d'encaissement, de paiement, de connexion, d'inscription et de retrait sont désactivés, avec la raison affichée.
+Manifest `standalone`, français, portrait, icônes 192, 512, maskable et apple-touch. Sous 1024 px, l'espace marchand garde la barre d'onglets. À partir de 1024 px, une barre latérale remplace les onglets et le contenu s'étale jusqu'à 1280 px. La page client `/p/<slug>` reste une colonne étroite. Le service worker précache la coquille et met en cache uniquement les GET `/api/dashboard`, `/api/sales` et `/api/score`. Les POST `/api/invoices` et `/api/payouts` ne sont ni cachés ni rejoués. Hors ligne, les boutons d'encaissement, de paiement, de connexion, d'inscription et de retrait sont désactivés, avec la raison affichée.
 
 Session : jeton opaque dans `localStorage` sous `jk.session` (`{ token, expiresAt }`). Un 401 sur une requête authentifiée efface la session et ramène à la connexion.
 
