@@ -160,6 +160,54 @@ describe("client HTTP", () => {
     });
   });
 
+  it("accepte une facture démo sans bolt11 et poste le moyen de paiement", async () => {
+    const storage = createMemoryStorage();
+    const seen: { url: string; method: string; body: unknown }[] = [];
+    const api = createApi({
+      storage,
+      fetch: async (input, init) => {
+        const url = String(input);
+        seen.push({
+          url,
+          method: init?.method ?? "GET",
+          body: init?.body ? JSON.parse(String(init.body)) : null,
+        });
+        if (url.endsWith("/pay")) {
+          return json(200, {
+            status: "pending",
+            amountXof: 2500,
+            expiresAt: "2099-01-01T00:15:00.000Z",
+            demoPayment: true,
+            payMethod: "wave",
+          });
+        }
+        return json(200, {
+          invoice: {
+            ...invoice,
+            bolt11: null,
+            demoPayment: true,
+            payUrl: "https://demo.example/p/awa-beaute?facture=inv1",
+            payMethod: null,
+          },
+        });
+      },
+    });
+    const loaded = await api.getInvoice("inv1");
+    expect(loaded.bolt11).toBeNull();
+    expect(loaded.demoPayment).toBe(true);
+    expect(loaded.payUrl).toBe("https://demo.example/p/awa-beaute?facture=inv1");
+    expect(loaded.payMethod).toBeNull();
+    const paid = await api.payPublicInvoice("inv1", "wave");
+    expect(seen[1]).toMatchObject({
+      url: "/api/public/invoices/inv1/pay",
+      method: "POST",
+      body: { method: "wave" },
+    });
+    expect(paid.status).toBe("pending");
+    expect(paid.demoPayment).toBe(true);
+    expect(paid.payMethod).toBe("wave");
+  });
+
   it("ne marque jamais payé un corps illisible", async () => {
     const storage = createMemoryStorage();
     writeStoredSession(storage, { token: "tok", expiresAt: "2099-01-01T00:00:00.000Z" });

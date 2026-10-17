@@ -22,6 +22,9 @@ export const invoiceSchema = z.object({
   amountXof: z.number(),
   amountSats: z.number(),
   bolt11: z.string().nullable(),
+  demoPayment: z.boolean().optional(),
+  payUrl: z.string().nullable().optional(),
+  payMethod: networkSchema.nullable().optional(),
   expiresAt: z.string().nullable(),
   paidAt: z.string().nullable(),
   label: z.string().nullable(),
@@ -65,6 +68,8 @@ export const publicInvoiceSchema = z.object({
   status: invoiceStatusSchema,
   amountXof: z.number(),
   expiresAt: z.string().nullable(),
+  demoPayment: z.boolean().optional(),
+  payMethod: networkSchema.nullable().optional(),
 });
 export type PublicInvoice = z.infer<typeof publicInvoiceSchema>;
 

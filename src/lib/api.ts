@@ -167,6 +167,13 @@ export function createApi(options: {
     getPublicInvoice(id: string): Promise<PublicInvoice> {
       return request(`/api/public/invoices/${encodeURIComponent(id)}`, { schema: publicInvoiceSchema });
     },
+    payPublicInvoice(id: string, method: PayoutNetwork): Promise<PublicInvoice> {
+      return request(`/api/public/invoices/${encodeURIComponent(id)}/pay`, {
+        method: "POST",
+        body: { method },
+        schema: publicInvoiceSchema,
+      });
+    },
     sales(from: string, to: string): Promise<Sales> {
       const params = new URLSearchParams({ from, to });
       return request(`/api/sales?${params.toString()}`, { schema: salesSchema });
