@@ -181,6 +181,29 @@ describe("états des écrans", () => {
     expect(await screen.findByRole("heading", { name: "Paiement reçu" }, { timeout: 5000 })).toBeInTheDocument();
   });
 
+  it("n'annonce pas de confirmation automatique dans l'aide quand le paiement est simulé", async () => {
+    renderAt("/p/awa-beaute?aide=1", async (input) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
+      if (path === "/api/health") return jsonResponse(200, { ok: true, bitnob: true, demoPayMode: "manual" });
+      return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
+    });
+    expect(await screen.findByText(/vous choisissez Wave, Orange Money, Free Money ou Expresso/)).toBeInTheDocument();
+    expect(screen.queryByText(/toute seule/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/portefeuille/)).not.toBeInTheDocument();
+  });
+
+  it("garde l'explication Lightning dans l'aide hors paiement simulé", async () => {
+    renderAt("/p/awa-beaute?aide=1", async (input) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
+      if (path === "/api/health") return jsonResponse(200, { ok: true, bitnob: true, demoPayMode: "auto" });
+      return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
+    });
+    expect(await screen.findByText(/La confirmation se fait toute seule/)).toBeInTheDocument();
+    expect(screen.getByText(/application de portefeuille/)).toBeInTheDocument();
+  });
+
   it("après la saisie du montant, ouvre le même choix en mode démo", async () => {
     const user = userEvent.setup();
     renderAt("/p/awa-beaute", async (input, init) => {
