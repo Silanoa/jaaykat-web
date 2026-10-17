@@ -2,7 +2,15 @@ import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import { Skeleton } from "./ui";
 
-export function QrImage({ value, label }: { value: string | null; label: string }) {
+export function QrImage({
+  value,
+  label,
+  className = "mx-auto size-[240px]",
+}: {
+  value: string | null;
+  label: string;
+  className?: string;
+}) {
   const [svg, setSvg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -11,8 +19,9 @@ export function QrImage({ value, label }: { value: string | null; label: string 
       setSvg(null);
       return;
     }
-    void QRCode.toString(value, { type: "svg", margin: 1, width: 240, errorCorrectionLevel: "M" }).then((markup) => {
-      if (!cancelled) setSvg(markup);
+    void QRCode.toString(value, { type: "svg", margin: 1, width: 360, errorCorrectionLevel: "M" }).then((markup) => {
+      if (cancelled) return;
+      setSvg(markup.replace(/width="[^"]+"/, 'width="100%"').replace(/height="[^"]+"/, 'height="100%"'));
     });
     return () => {
       cancelled = true;
@@ -20,12 +29,12 @@ export function QrImage({ value, label }: { value: string | null; label: string 
   }, [value]);
 
   if (!value || !svg) {
-    return <Skeleton className="mx-auto size-[240px]" />;
+    return <Skeleton className={className} />;
   }
 
   return (
     <div
-      className="mx-auto size-[240px] bg-white p-2"
+      className={`${className} bg-white p-2 [&_svg]:h-full [&_svg]:w-full`}
       role="img"
       aria-label={label}
       dangerouslySetInnerHTML={{ __html: svg }}

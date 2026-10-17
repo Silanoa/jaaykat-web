@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AmountPad, AmountReadout } from "../components/pads";
+import { QrImage } from "../components/qr-image";
 import { ShopHeader } from "../components/shell";
 import { Button, Page } from "../components/ui";
 import { useOnline } from "../hooks/useOnline";
@@ -70,6 +71,8 @@ export function ChargePage() {
       }
     >
       <ShopHeader />
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
+      <div>
       <h1 className="mb-2 text-[28px] leading-[34px] font-bold">Encaisser</h1>
       <AmountReadout value={amount} />
       {rates.isFetching ? <p className="text-center text-sm text-muted">Mise à jour du taux…</p> : null}
@@ -103,6 +106,21 @@ export function ChargePage() {
       <Link to="/app/qr" className="mt-4 inline-flex min-h-12 items-center text-primary">
         Mon QR permanent{merchant ? "" : ""}
       </Link>
+      </div>
+      <aside className="mt-6 hidden rounded-2xl bg-surface p-6 lg:block">
+        <h2 className="text-lg font-semibold">QR permanent</h2>
+        <p className="mt-1 text-sm text-muted">
+          Ce QR ouvre la page client. Après « Générer le QR », le QR de la vente et son statut s'affichent en grand à droite.
+        </p>
+        {merchant?.qrUrl ? (
+          <div className="mt-4">
+            <QrImage value={merchant.qrUrl} label="QR permanent" className="mx-auto size-[360px]" />
+          </div>
+        ) : (
+          <p className="mt-4 text-sm">Aucun QR permanent renvoyé par le compte.</p>
+        )}
+      </aside>
+      </div>
     </Page>
   );
 }
