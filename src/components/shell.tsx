@@ -281,7 +281,7 @@ export function ToastViewport() {
   }, [message, hide]);
   if (!message) return null;
   return (
-    <p role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-[448px] rounded-xl bg-ink px-4 py-3 text-center text-sm text-white shadow-[0_8px_24px_rgba(17,24,39,0.16)]">
+    <p role="status" className="jk-fade-in pointer-events-none fixed inset-x-4 bottom-24 z-50 mx-auto max-w-[448px] rounded-xl bg-ink px-4 py-3 text-center text-sm text-white shadow-[0_8px_24px_rgba(17,24,39,0.16)]">
       {message}
     </p>
   );

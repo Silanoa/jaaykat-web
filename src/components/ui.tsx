@@ -16,10 +16,18 @@ export function Button({ variant = "primary", busy = false, className = "", chil
   return (
     <button
       {...props}
+      aria-busy={busy || undefined}
       disabled={disabled || busy}
       className={`inline-flex min-h-14 w-full items-center justify-center rounded-xl px-4 text-base font-semibold disabled:cursor-not-allowed ${VARIANTS[variant]} ${className}`}
     >
-      {busy ? "Veuillez patienter…" : children}
+      {busy ? (
+        <span className="inline-flex items-center gap-2">
+          <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+          Veuillez patienter…
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 }
@@ -68,7 +76,7 @@ export function Page({
   actionClassName?: string;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="jk-fade-in flex min-h-0 flex-1 flex-col">
       <div className="flex-1 overflow-y-auto px-4 pb-4 lg:overflow-visible lg:px-8">
         {title ? <h1 className="mb-4 text-[28px] leading-[34px] font-bold">{title}</h1> : null}
         {children}
