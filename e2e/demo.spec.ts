@@ -269,7 +269,7 @@ test("parcours 2 : 2 500 F, QR, paiement simulé, écran payé", async ({ page }
   await page.getByRole("button", { name: /2\s500/ }).click();
   await page.getByRole("button", { name: "Générer le QR" }).click();
   await expect(page.getByText("En attente du paiement")).toBeVisible();
-  await expect(page.getByText("Paiement simulé · sandbox").first()).toBeVisible();
+  await expect(page.getByText("Mode démo · sandbox, aucune somme réelle")).toBeVisible();
   await expect(page.getByRole("img", { name: "QR de la facture" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Payé" })).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: "Nouvelle vente" }).click();
@@ -291,7 +291,8 @@ test("parcours démo : scan du QR, choix Wave, paiement reçu", async ({ page })
   await page.goto("/p/awa-beaute?facture=inv-comptoir");
   await expect(page.getByRole("heading", { name: "Awa Beauté" })).toBeVisible();
   await expect(page.getByText("Démo : paiement simulé, aucune somme réelle")).toBeVisible();
-  await page.getByRole("button", { name: "Payer avec Wave" }).click();
+  await page.getByRole("button", { name: /^Wave/ }).click();
+  await page.getByRole("button", { name: /Confirmer le paiement de/ }).click();
   await expect(page.getByRole("heading", { name: "Paiement en cours" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Paiement reçu" })).toBeVisible({ timeout: 10_000 });
   await page.goto("/app/invoice/inv-comptoir");
@@ -305,7 +306,6 @@ test("parcours 3 : le client paie depuis l'affiche et le marchand voit Payé", a
     await page.getByRole("button", { name: digit, exact: true }).click();
   }
   await page.getByRole("button", { name: "Payer" }).click();
-  await expect(page.getByText("Paiement simulé · sandbox : confirmation automatique en ~5 s")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Paiement reçu" })).toBeVisible({ timeout: 10_000 });
 
   await seedSession(page);

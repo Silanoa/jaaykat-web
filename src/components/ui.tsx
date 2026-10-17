@@ -74,7 +74,7 @@ export function Page({
         {children}
       </div>
       {action ? (
-        <div className={`sticky bottom-0 bg-bg px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] lg:px-8 ${actionClassName}`}>
+        <div data-fixed className={`sticky bottom-0 bg-bg px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] lg:px-8 ${actionClassName}`}>
           {action}
         </div>
       ) : null}

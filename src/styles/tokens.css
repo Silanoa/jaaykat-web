@@ -151,3 +151,11 @@ button:not(:disabled):active {
     transition-duration: 0.01ms !important;
   }
 }
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  accent-color: var(--color-primary);
+}

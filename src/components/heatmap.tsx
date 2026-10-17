@@ -14,10 +14,10 @@ export function Heatmap({ cells }: { cells: Cell[] }) {
   return (
     <div>
       <div className="overflow-x-auto">
-        <div className="grid min-w-[420px] gap-1" style={{ gridTemplateColumns: "40px repeat(18, minmax(18px, 1fr))" }}>
+        <div className="grid min-w-[560px] gap-1" style={{ gridTemplateColumns: "40px repeat(18, minmax(24px, 1fr))" }}>
           <span />
           {HOURS.map((hour) => (
-            <span key={hour} className="text-center text-[10px] text-subtle">
+            <span key={hour} className="text-center text-xs text-subtle">
               {hour}
             </span>
           ))}
@@ -76,7 +76,8 @@ function DayRow({
             key={`${weekday}-${hour}`}
             type="button"
             aria-label={`${day} ${hour}h, ${cell.salesCount} ventes, ${formatXof(cell.revenueXof)}`}
-            className={`min-h-6 rounded-sm ${tone}`}
+            data-dense="true"
+            className={`min-h-8 rounded-sm ${tone}`}
             onClick={() => onSelect(cell)}
           />
         );
