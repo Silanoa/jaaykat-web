@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { ChevronRight, Smartphone, Zap } from "lucide-react";
+import { useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { LightningPanel } from "../components/lightning-panel";
+import { PaidView } from "../components/paid-view";
 import { AmountPad, AmountReadout } from "../components/pads";
-import { QrImage } from "../components/qr-image";
+import { PayStepper } from "../components/pay-stepper";
 import { PublicShell } from "../components/shell";
 import { Button, ErrorState, Page, Skeleton } from "../components/ui";
 import { useNow } from "../hooks/useNow";
@@ -10,14 +13,12 @@ import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
 import { getDeviceId } from "../lib/device";
-import { countdown, formatSats, formatWhen, formatXof } from "../lib/format";
-import { categoryLabel, networkLabel } from "../lib/labels";
+import { countdown, formatXof } from "../lib/format";
+import { categoryLabel, payMethodLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
-import { publicPayPhase } from "../lib/pay-demo";
-import { invoiceSchema, type Invoice, type PayoutNetwork } from "../lib/schemas";
+import { payChoices, payProgress, publicPayPhase } from "../lib/pay-demo";
+import { invoiceSchema, type Invoice, type PayMethod } from "../lib/schemas";
 import { isTerminalInvoice, invoiceStatusLabel } from "../lib/status";
-
-const PAY_METHODS: readonly PayoutNetwork[] = ["wave", "orange", "free", "expresso"];
 
 function saveCreated(invoice: Invoice) {
   sessionStorage.setItem(`jk.publicInvoice.${invoice.id}`, JSON.stringify(invoice));
@@ -142,6 +143,10 @@ function ShopCheckout({ slug }: { slug: string }) {
   );
 }
 
+function DemoNote() {
+  return <p className="mt-6 text-center text-xs text-subtle">Démo : paiement simulé, aucune somme réelle</p>;
+}
+
 function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -149,8 +154,9 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const online = useOnline();
   const [, setParams] = useSearchParams();
   const created = readCreated(invoiceId);
-  const [chosen, setChosen] = useState<PayoutNetwork | null>(null);
-  const [busyMethod, setBusyMethod] = useState<PayoutNetwork | null>(null);
+  const [selected, setSelected] = useState<PayMethod | null>(null);
+  const [chosen, setChosen] = useState<PayMethod | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const block = postBlockReason("public-invoice", online);
   const shop = useQuery({ queryKey: ["shop", slug], queryFn: () => api.getShop(slug), retry: false });
@@ -168,42 +174,62 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const expiresAt = poll.data?.expiresAt ?? created?.expiresAt ?? null;
   const demoPayment = Boolean(poll.data?.demoPayment ?? created?.demoPayment);
   const payMethod = poll.data?.payMethod ?? chosen ?? created?.payMethod ?? null;
+  const bolt11 = poll.data?.bolt11 ?? created?.bolt11 ?? null;
   const phase = publicPayPhase({ status, demoPayment, payMethod });
   const clock = expiresAt ? countdown(expiresAt, now) : null;
+  const shopName = shop.data?.name ?? "";
+  const receivedAt = useRef<string | null>(null);
+  if (phase === "paid" && receivedAt.current === null) receivedAt.current = new Date().toISOString();
 
-  async function choose(method: PayoutNetwork) {
-    if (block || busyMethod) return;
-    setBusyMethod(method);
+  async function confirm() {
+    if (block || busy || !selected) return;
+    setBusy(true);
     setError(null);
     try {
-      const result = await api.payPublicInvoice(invoiceId, method);
-      setChosen(result.payMethod ?? method);
+      const result = await api.payPublicInvoice(invoiceId, selected);
+      setChosen(result.payMethod ?? selected);
       queryClient.setQueryData(["public-invoice", invoiceId], result);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "Le paiement n'a pas démarré. Réessayez.");
     } finally {
-      setBusyMethod(null);
+      setBusy(false);
     }
+  }
+
+  if (poll.isLoading && !created) {
+    return (
+      <PublicShell>
+        <Page title={shopName || " "}>
+          <Skeleton className="mx-auto h-14 w-48" />
+          <div className="mt-6 grid gap-2">
+            {Array.from({ length: 5 }, (_, index) => (
+              <Skeleton key={index} className="h-16" />
+            ))}
+          </div>
+        </Page>
+      </PublicShell>
+    );
   }
 
   if (phase === "paid") {
     return (
       <PublicShell>
-        <Page
+        <PaidView
           title="Paiement reçu"
-          action={
+          amountXof={amount}
+          paidAt={receivedAt.current}
+          subject={shopName}
+          proof={
+            created?.paymentHash
+              ? { kind: "Preuve", value: created.paymentHash }
+              : { kind: "Référence", value: invoiceId }
+          }
+          primary={
             <Button type="button" onClick={() => setParams({})}>
               Fermer
             </Button>
           }
-        >
-          <p className="tabular text-[40px] leading-[48px] font-bold">{formatXof(amount)}</p>
-          <p className="mt-2">{shop.data?.name}</p>
-          <p className="text-sm text-muted">{formatWhen(new Date().toISOString())}</p>
-          {created?.paymentHash ? <p className="mt-2 text-sm">Preuve {created.paymentHash.slice(0, 4)}…{created.paymentHash.slice(-2)}</p> : (
-            <p className="mt-2 text-sm">Référence {invoiceId.slice(0, 4)}…{invoiceId.slice(-2)}</p>
-          )}
-        </Page>
+        />
       </PublicShell>
     );
   }
@@ -219,86 +245,141 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
             </Button>
           }
         >
-          <p>{invoiceStatusLabel(status)} Recommencez le paiement.</p>
+          <p role="status">{invoiceStatusLabel(status)} Recommencez le paiement.</p>
         </Page>
       </PublicShell>
     );
   }
 
-  if (phase === "choose") {
+  if (phase === "choose" && selected === null) {
     return (
       <PublicShell>
-        <Page title={shop.data?.name ?? "Paiement"}>
-          <p className="rounded-lg bg-accent px-3 py-2 text-center text-sm font-medium text-ink">
-            Démo : paiement simulé, aucune somme réelle
-          </p>
-          <p className="tabular mt-4 text-center text-[40px] leading-[48px] font-bold">{formatXof(amount)}</p>
-          <div className="mt-4 grid gap-2">
-            {PAY_METHODS.map((method) => (
-              <Button
-                key={method}
+        <Page title={shopName || "Paiement"}>
+          <p className="tabular text-center text-[40px] leading-[48px] font-bold">{formatXof(amount)}</p>
+          <p className="mt-1 text-center text-sm text-muted">Choisissez comment payer</p>
+          <div className="mt-5 grid gap-2">
+            {payChoices().map((choice) => (
+              <button
+                key={choice.method}
                 type="button"
-                disabled={Boolean(block) || busyMethod !== null}
-                busy={busyMethod === method}
-                onClick={() => void choose(method)}
+                disabled={Boolean(block)}
+                onClick={() => setSelected(choice.method)}
+                className="flex min-h-16 items-center gap-3 rounded-xl border border-black/10 bg-surface px-4 text-left shadow-[0_1px_2px_rgba(17,24,39,0.06)] active:bg-bg disabled:opacity-50"
               >
-                Payer avec {networkLabel(method)}
-              </Button>
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-success-bg text-primary">
+                  {choice.method === "lightning" ? <Zap aria-hidden="true" size={20} /> : <Smartphone aria-hidden="true" size={20} />}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="font-semibold">{choice.label}</span>
+                  <span className="text-sm text-muted">{choice.hint}</span>
+                </span>
+                <ChevronRight aria-hidden="true" size={20} className="text-subtle" />
+              </button>
             ))}
           </div>
           {block ? <p className="mt-3 text-sm text-warning">{block}</p> : null}
-          {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+          <DemoNote />
         </Page>
       </PublicShell>
     );
   }
 
-  const manual = demoPayment;
+  if (phase === "choose" && selected !== null) {
+    const lightning = selected === "lightning";
+    return (
+      <PublicShell>
+        <Page
+          title="Confirmer le paiement"
+          action={
+            <div className="grid gap-2">
+              {block ? <p className="text-sm text-warning">{block}</p> : null}
+              {error ? (
+                <p role="alert" className="text-sm text-danger">
+                  {error}
+                </p>
+              ) : null}
+              <Button type="button" busy={busy} disabled={Boolean(block)} onClick={() => void confirm()}>
+                Confirmer le paiement de {formatXof(amount)}
+              </Button>
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => setSelected(null)}>
+                Changer de moyen
+              </Button>
+            </div>
+          }
+        >
+          <dl className="divide-y divide-black/10 rounded-2xl bg-surface text-sm shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <dt className="text-muted">Boutique</dt>
+              <dd className="truncate font-medium">{shopName}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <dt className="text-muted">Moyen</dt>
+              <dd className="font-medium">{payMethodLabel(selected)}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <dt className="text-muted">Montant</dt>
+              <dd className="tabular text-lg font-bold">{formatXof(amount)}</dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-sm text-muted">
+            {lightning
+              ? "Vous payez la facture Lightning avec votre portefeuille. En démo sandbox, le règlement est simulé : le réseau de test ne permet pas de payer réellement."
+              : "Démo : le paiement est simulé, aucune somme réelle n'est débitée."}
+          </p>
+          <DemoNote />
+        </Page>
+      </PublicShell>
+    );
+  }
+
+  const steps = payProgress({ status, payMethod });
+  const current = steps.find((step) => step.state === "current");
+  const showWallet = bolt11 !== null && (payMethod === "lightning" || !demoPayment);
   return (
     <PublicShell>
       <Page title="Paiement en cours">
-        <p className="text-sm text-muted">{shop.data?.name}</p>
-        <p className="tabular mt-2 text-[32px] font-bold">{formatXof(amount)}</p>
-        {created && !manual ? <p className="text-sm text-muted">{formatSats(created.amountSats)}</p> : null}
-        {manual ? (
-          <p className="mt-3 rounded-lg bg-accent px-3 py-2 text-center text-sm font-medium text-ink">
-            Démo : paiement simulé, aucune somme réelle
-          </p>
-        ) : (
-          <div className="my-4">
-            <QrImage value={created?.bolt11 ?? null} label="QR de la facture" />
+        <div className="jk-fade-in">
+          <p className="text-sm text-muted">{shopName}</p>
+          <p className="tabular mt-1 text-[32px] leading-10 font-bold">{formatXof(amount)}</p>
+          {payMethod ? <p className="mt-1 text-sm text-muted">{payMethodLabel(payMethod)}</p> : null}
+          <div className="mt-6">
+            <PayStepper steps={steps} />
           </div>
-        )}
-        <p className="text-center">{payMethod ? networkLabel(payMethod) : invoiceStatusLabel(status)}</p>
-        {clock ? (
-          <p className="text-center text-sm tabular">
-            {clock.mmss} · expire à {clock.expiresClock}
+          <p role="status" aria-live="polite" className="mt-4 min-h-6 text-center text-sm font-medium">
+            {current ? `${current.label} en cours` : ""}
           </p>
-        ) : null}
-        {manual ? null : (
-          <p className="mt-3 text-center text-sm">Paiement simulé · sandbox : confirmation automatique en ~5 s</p>
-        )}
-        {manual ? null : (
-          <button
-            type="button"
-            className="mt-4 min-h-12 w-full text-primary"
-            disabled={!created?.bolt11}
-            onClick={() => {
-              if (!created?.bolt11) return;
-              void navigator.clipboard.writeText(created.bolt11);
-            }}
-          >
-            Copier la facture
-          </button>
-        )}
-        {poll.isError ? (
-          <p className="mt-2 text-sm text-danger">
-            {poll.error instanceof ApiError ? poll.error.message : "Vérification impossible."}{" "}
-            <button type="button" className="underline" onClick={() => void poll.refetch()}>
-              Réessayer
-            </button>
-          </p>
-        ) : null}
+          {showWallet && bolt11 ? (
+            <div className="mt-4">
+              <LightningPanel
+                bolt11={bolt11}
+                note={
+                  demoPayment
+                    ? "Démo sandbox : le règlement est simulé, le réseau de test ne permet pas de payer réellement."
+                    : "Payez cette facture avec n'importe quel portefeuille Lightning."
+                }
+              />
+            </div>
+          ) : null}
+          {clock ? (
+            <p className="tabular mt-4 text-center text-sm text-muted">
+              Expire dans {clock.mmss} · à {clock.expiresClock}
+            </p>
+          ) : null}
+          {demoPayment ? null : (
+            <p className="mt-2 text-center text-xs text-subtle">
+              Démo sandbox : la confirmation se fait automatiquement, sans paiement réel.
+            </p>
+          )}
+          {poll.isError ? (
+            <p role="alert" className="mt-3 text-center text-sm text-danger">
+              {poll.error instanceof ApiError ? poll.error.message : "Vérification impossible."}{" "}
+              <button type="button" className="min-h-12 underline" onClick={() => void poll.refetch()}>
+                Réessayer
+              </button>
+            </p>
+          ) : null}
+          {demoPayment ? <DemoNote /> : null}
+        </div>
       </Page>
     </PublicShell>
   );

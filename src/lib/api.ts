@@ -25,6 +25,7 @@ import {
   type Invoice,
   type Me,
   type Payout,
+  type PayMethod,
   type PayoutNetwork,
   type PayoutQuote,
   type PublicInvoice,
@@ -168,7 +169,7 @@ export function createApi(options: {
     getPublicInvoice(id: string): Promise<PublicInvoice> {
       return request(`/api/public/invoices/${encodeURIComponent(id)}`, { schema: publicInvoiceSchema });
     },
-    payPublicInvoice(id: string, method: PayoutNetwork): Promise<PublicInvoice> {
+    payPublicInvoice(id: string, method: PayMethod): Promise<PublicInvoice> {
       return request(`/api/public/invoices/${encodeURIComponent(id)}/pay`, {
         method: "POST",
         body: { method },

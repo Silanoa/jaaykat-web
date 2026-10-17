@@ -104,7 +104,7 @@ describe("états des écrans", () => {
       true,
     );
     expect(await screen.findByText("En attente du paiement")).toBeInTheDocument();
-    expect(screen.getByText("Paiement simulé · sandbox")).toBeInTheDocument();
+    expect(screen.getByText("Mode démo · sandbox, aucune somme réelle")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Nouvelle vente" })).not.toBeInTheDocument();
   });
 
@@ -171,12 +171,15 @@ describe("états des écrans", () => {
     expect(await screen.findByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
     expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Payer avec Wave" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Payer avec Orange Money" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Payer avec Free Money" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Payer avec Expresso" })).toBeEnabled();
-    await user.click(screen.getByRole("button", { name: "Payer avec Wave" }));
+    for (const name of [/^Portefeuille Lightning/, /^Wave/, /^Orange Money/, /^Free Money/, /^Expresso/]) {
+      expect(screen.getByRole("button", { name })).toBeEnabled();
+    }
+    await user.click(screen.getByRole("button", { name: /^Wave/ }));
+    expect(await screen.findByRole("heading", { name: "Confirmer le paiement" })).toBeInTheDocument();
+    expect(submitted).toBe(false);
+    await user.click(screen.getByRole("button", { name: /Confirmer le paiement de 2\s500\sF/ }));
     expect(await screen.findByRole("heading", { name: "Paiement en cours" })).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Confirmation");
     expect(screen.queryByRole("heading", { name: "Paiement reçu" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Paiement reçu" }, { timeout: 5000 })).toBeInTheDocument();
   });
@@ -248,8 +251,68 @@ describe("états des écrans", () => {
       await user.click(screen.getByRole("button", { name: new RegExp(`^${digit}$`) }));
     }
     await user.click(screen.getByRole("button", { name: "Payer" }));
-    expect(await screen.findByRole("button", { name: "Payer avec Wave" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^Wave/ })).toBeInTheDocument();
     expect(screen.getByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
+  });
+
+  it("propose le portefeuille Lightning avec facture, copie et lien lightning:", async () => {
+    let paid = false;
+    const user = userEvent.setup();
+    renderAt("/p/awa-beaute?facture=inv-ln", async (input) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
+      if (path === "/api/health") return jsonResponse(200, { ok: true });
+      if (path === "/api/public/shops/awa-beaute") return jsonResponse(200, { name: "Awa Beauté", category: "beaute" });
+      if (path === "/api/public/invoices/inv-ln/pay") {
+        paid = true;
+        return jsonResponse(200, {
+          status: "pending",
+          amountXof: 2600,
+          expiresAt: "2099-01-01T00:15:00.000Z",
+          demoPayment: true,
+          payMethod: "lightning",
+          bolt11: "lntb26u1pexample",
+        });
+      }
+      if (path === "/api/public/invoices/inv-ln") {
+        return jsonResponse(200, {
+          status: "pending",
+          amountXof: 2600,
+          expiresAt: "2099-01-01T00:15:00.000Z",
+          demoPayment: true,
+          payMethod: paid ? "lightning" : null,
+          ...(paid ? { bolt11: "lntb26u1pexample" } : {}),
+        });
+      }
+      return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
+    });
+    await user.click(await screen.findByRole("button", { name: /^Portefeuille Lightning/ }));
+    expect(screen.getByText(/le réseau de test ne permet pas de payer réellement/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Confirmer le paiement de 2\s600\sF/ }));
+    const open = await screen.findByRole("link", { name: "Ouvrir mon portefeuille" });
+    expect(open).toHaveAttribute("href", "lightning:lntb26u1pexample");
+    expect(screen.getByRole("button", { name: "Copier la facture" })).toBeEnabled();
+    expect(screen.getByRole("img", { name: "QR de la facture Lightning" })).toBeInTheDocument();
+  });
+
+  it("revient au choix du moyen sans appeler l'API", async () => {
+    let calls = 0;
+    const user = userEvent.setup();
+    renderAt("/p/awa-beaute?facture=inv-back", async (input) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
+      if (path === "/api/health") return jsonResponse(200, { ok: true });
+      if (path === "/api/public/shops/awa-beaute") return jsonResponse(200, { name: "Awa Beauté", category: "beaute" });
+      if (path.endsWith("/pay")) calls += 1;
+      if (path === "/api/public/invoices/inv-back") {
+        return jsonResponse(200, { status: "pending", amountXof: 900, expiresAt: "2099-01-01T00:15:00.000Z", demoPayment: true, payMethod: null });
+      }
+      return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
+    });
+    await user.click(await screen.findByRole("button", { name: /^Orange Money/ }));
+    await user.click(screen.getByRole("button", { name: "Changer de moyen" }));
+    expect(await screen.findByRole("button", { name: /^Free Money/ })).toBeInTheDocument();
+    expect(calls).toBe(0);
   });
 
   it("affiche l'écran payé quand l'API renvoie paid", async () => {
@@ -263,6 +326,11 @@ describe("états des écrans", () => {
     );
     expect(await screen.findByRole("heading", { name: "Payé" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nouvelle vente" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Voir la vente" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Copier la preuve" })).toBeEnabled();
+    expect(screen.getByText("démo · sandbox".replace("d", "D"))).toBeInTheDocument();
+    expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
+    expect(screen.getByText(/4\s230 sats/)).toBeInTheDocument();
   });
 
   it("affiche l'état vide des ventes", async () => {

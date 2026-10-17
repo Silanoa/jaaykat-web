@@ -1,4 +1,5 @@
 const NBSP = "\u00A0";
+const THIN_NBSP = "\u202F";
 
 const WEEKDAY_FR: Record<string, string> = {
   Sun: "dim.",
@@ -32,7 +33,7 @@ function groupDigits(value: number): string {
   for (let index = digits.length; index > 0; index -= 3) {
     parts.unshift(digits.slice(Math.max(0, index - 3), index));
   }
-  return sign + parts.join(NBSP);
+  return sign + parts.join(THIN_NBSP);
 }
 
 export function formatXof(amount: number): string {

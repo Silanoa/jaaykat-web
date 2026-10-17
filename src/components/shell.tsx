@@ -26,7 +26,7 @@ export function SessionListener() {
 
 export function SandboxBanner() {
   return (
-    <p className="bg-accent px-4 py-1 text-center text-sm font-medium text-ink">Paiement simulé · sandbox</p>
+    <p className="bg-accent/20 px-4 py-1 text-center text-xs font-medium text-ink">Mode démo · sandbox, aucune somme réelle</p>
   );
 }
 
