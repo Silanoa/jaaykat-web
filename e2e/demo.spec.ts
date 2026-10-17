@@ -10,22 +10,29 @@ const merchant = {
 };
 const session = { expiresAt: "2099-01-01T00:00:00.000Z" };
 
+type PayMethod = "wave" | "orange" | "free" | "expresso";
+
 type Invoice = {
   id: string;
   status: "pending" | "paid";
   amountXof: number;
   amountSats: number;
-  bolt11: string;
+  bolt11: string | null;
   expiresAt: string;
   paidAt: string | null;
   label: string | null;
   channel: "dynamic" | "static_qr";
   source: "live" | "seed";
   paymentHash: string | null;
+  demoPayment?: boolean;
+  payUrl?: string;
+  payMethod?: PayMethod | null;
+  payStartedAt?: number;
   createdAtMs: number;
 };
 
-async function mockApi(page: Page) {
+async function mockApi(page: Page, options?: { manualDemo?: boolean }) {
+  const manualDemo = options?.manualDemo ?? false;
   const invoices = new Map<string, Invoice>();
   await page.route("**/api/**", async (route: Route) => {
     const request = route.request();
@@ -67,23 +74,31 @@ async function mockApi(page: Page) {
         return send(400, { error: "VALIDATION", message: "Clé d'idempotence manquante" });
       }
       const body = request.postDataJSON() as { amountXof: number; label?: string };
-      const invoice = makeInvoice("inv-comptoir", body.amountXof, body.label ?? null);
+      const invoice = makeInvoice("inv-comptoir", body.amountXof, body.label ?? null, "dynamic", manualDemo);
       invoices.set(invoice.id, invoice);
       return send(201, { invoice: publicView(invoice) });
     }
     if (path === "/api/public/shops/awa-beaute") return send(200, { name: "Awa Beauté", category: "beaute" });
     if (path === "/api/public/invoices" && method === "POST") {
       const body = request.postDataJSON() as { amountXof: number };
-      const invoice = makeInvoice("inv-client", body.amountXof, null, "static_qr");
+      const invoice = makeInvoice("inv-client", body.amountXof, null, "static_qr", manualDemo);
       invoices.set(invoice.id, invoice);
       return send(201, { invoice: publicView(invoice) });
+    }
+    const demoPay = path.match(/^\/api\/public\/invoices\/([^/]+)\/pay$/);
+    if (demoPay && method === "POST") {
+      const invoice = invoices.get(demoPay[1]!);
+      if (!invoice) return send(404, { error: "NOT_FOUND", message: "Facture introuvable" });
+      const body = request.postDataJSON() as { method?: PayMethod };
+      invoice.payMethod = body.method ?? null;
+      invoice.payStartedAt = Date.now();
+      return send(200, publicPoll(advance(invoice)));
     }
     const merchantInvoice = path.match(/^\/api\/invoices\/([^/]+)$/);
     if (merchantInvoice && method === "GET") return send(200, { invoice: advance(invoices.get(merchantInvoice[1]!)) });
     const publicInvoice = path.match(/^\/api\/public\/invoices\/([^/]+)$/);
     if (publicInvoice && method === "GET") {
-      const invoice = advance(invoices.get(publicInvoice[1]!));
-      return send(200, { status: invoice.status, amountXof: invoice.amountXof, expiresAt: invoice.expiresAt });
+      return send(200, publicPoll(advance(invoices.get(publicInvoice[1]!))));
     }
     if (path === "/api/dashboard") {
       return send(200, {
@@ -127,31 +142,64 @@ async function mockApi(page: Page) {
   });
 }
 
-function makeInvoice(id: string, amountXof: number, label: string | null, channel: Invoice["channel"] = "dynamic"): Invoice {
+function makeInvoice(
+  id: string,
+  amountXof: number,
+  label: string | null,
+  channel: Invoice["channel"] = "dynamic",
+  manualDemo = false,
+): Invoice {
   return {
     id,
     status: "pending",
     amountXof,
     amountSats: 4230,
-    bolt11: "lntb1demo",
+    bolt11: manualDemo ? null : "lntb1demo",
     expiresAt: "2099-01-01T00:15:00.000Z",
     paidAt: null,
     label,
     channel,
     source: "live",
     paymentHash: null,
+    ...(manualDemo
+      ? {
+          demoPayment: true,
+          payUrl: `http://127.0.0.1:4173/p/awa-beaute?facture=${id}`,
+          payMethod: null,
+        }
+      : {}),
     createdAtMs: Date.now(),
   };
 }
 
 function publicView(invoice: Invoice) {
-  const { createdAtMs: _createdAtMs, ...view } = invoice;
+  const { createdAtMs: _createdAtMs, payStartedAt: _payStartedAt, ...view } = invoice;
   return view;
+}
+
+function publicPoll(invoice: Invoice) {
+  if (!invoice.demoPayment) {
+    return { status: invoice.status, amountXof: invoice.amountXof, expiresAt: invoice.expiresAt };
+  }
+  return {
+    status: invoice.status,
+    amountXof: invoice.amountXof,
+    expiresAt: invoice.expiresAt,
+    demoPayment: true,
+    payMethod: invoice.payMethod ?? null,
+  };
 }
 
 function advance(invoice: Invoice | undefined) {
   if (!invoice) {
     throw new Error("Facture inconnue");
+  }
+  if (invoice.demoPayment) {
+    if (invoice.payMethod && invoice.payStartedAt !== undefined && Date.now() - invoice.payStartedAt >= 800) {
+      invoice.status = "paid";
+      invoice.paidAt = "2026-10-17T18:42:00.000Z";
+    }
+    return publicView(invoice);
   }
   if (Date.now() - invoice.createdAtMs >= 1200) {
     invoice.status = "paid";
@@ -226,6 +274,28 @@ test("parcours 2 : 2 500 F, QR, paiement simulé, écran payé", async ({ page }
   await expect(page.getByRole("heading", { name: "Payé" })).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: "Nouvelle vente" }).click();
   await expect(page.getByRole("heading", { name: "Encaisser" })).toBeVisible();
+});
+
+test("parcours démo : scan du QR, choix Wave, paiement reçu", async ({ page }) => {
+  await page.unroute("**/api/**");
+  await mockApi(page, { manualDemo: true });
+  await seedSession(page);
+  await page.goto("/app/charge");
+  await page.getByRole("button", { name: /2\s500/ }).click();
+  await page.getByRole("button", { name: "Générer le QR" }).click();
+  await expect(page.getByText("En attente du client")).toBeVisible();
+  await expect(page.getByRole("img", { name: "QR de la facture" })).toBeVisible();
+  await expect(page.getByText("Confirmation automatique en ~5 s.")).toHaveCount(0);
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("heading", { name: "Payé" })).toHaveCount(0);
+  await page.goto("/p/awa-beaute?facture=inv-comptoir");
+  await expect(page.getByRole("heading", { name: "Awa Beauté" })).toBeVisible();
+  await expect(page.getByText("Démo : paiement simulé, aucune somme réelle")).toBeVisible();
+  await page.getByRole("button", { name: "Payer avec Wave" }).click();
+  await expect(page.getByRole("heading", { name: "Paiement en cours" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Paiement reçu" })).toBeVisible({ timeout: 10_000 });
+  await page.goto("/app/invoice/inv-comptoir");
+  await expect(page.getByRole("heading", { name: "Payé" })).toBeVisible({ timeout: 10_000 });
 });
 
 test("parcours 3 : le client paie depuis l'affiche et le marchand voit Payé", async ({ page }) => {
