@@ -1,29 +1,19 @@
 # jaaykat-web
 
-PWA Jaaykat (web + mobile installable) — React + Vite.
+PWA Jaaykat (marchand + page paiement client). Mobile = installation écran d’accueil, pas de store.
 
-Pas d’app native : le « mobile » = PWA `display: standalone` sur l’écran d’accueil.
+## Docs
 
-## Spec
+- [AGENTS.md](./AGENTS.md)
+- [Design](./docs/superpowers/specs/2026-10-17-jaaykat-web-design.md)
+- [Plan](./docs/superpowers/plans/2026-10-17-jaaykat-web-implementation.md)
 
-→ [SPEC.md](./SPEC.md) (écrans E*/C*/A1, PWA, polling)
-
-## Dev
+## Run
 
 ```bash
 pnpm install
 pnpm dev
-# proxy /api → http://localhost:3000 (jaaykat-api)
 ```
 
-## Build pour la démo
-
-```bash
-pnpm build
-# Copier dist/ vers jaaykat-api/public/
-```
-
-## Repos
-
-- Backend : [jaaykat-api](https://github.com/Silanoa/jaaykat-api)
-- SDK : [bitnob-lite](https://github.com/Silanoa/bitnob-lite)
+Proxy `/api` → `http://localhost:3000`.  
+Build démo : `pnpm build` puis copier `dist/` vers `jaaykat-api/public/`.

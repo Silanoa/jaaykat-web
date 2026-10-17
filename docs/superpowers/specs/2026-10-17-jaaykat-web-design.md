@@ -1,12 +1,14 @@
-# SPEC — jaaykat-web (piste web + mobile PWA)
+# Design — jaaykat-web
 
-**Owner :** toi  
-**Stack :** Vite 8, React 19, React Router 8, TanStack Query 5, Zustand 5, Tailwind 4, shadcn/ui, Recharts, qrcode, zod, vite-plugin-pwa  
-**Mobile :** pas de native — PWA installable (`display: standalone`)  
-**Done :**
-- **20h00** : E05→E06→E07 live via tunnel
-- **00h00** : C1→C3 + E01b installable + E02/E03
-- **09h00** : PWA installée téléphone A, Lighthouse PWA OK, parcours 1–7 jouables
+Date : 2026-10-17  
+Statut : prêt pour implémentation  
+Stack : Vite, React 19, React Router, TanStack Query, Zustand, Tailwind, vite-plugin-pwa  
+Mobile : PWA `display: standalone` (pas d’app native)
+
+Checkpoints démo :
+- 20h00 — E05→E06→E07 via tunnel
+- 00h00 — C1→C3, install PWA, inscription
+- 09h00 — PWA installée, parcours démo jouables
 
 ---
 
