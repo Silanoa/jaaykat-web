@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Field, Page } from "../components/ui";
 import { PinPad } from "../components/pads";
-import { PublicShell } from "../components/shell";
+import { AuthShell } from "../components/shell";
 import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
@@ -21,7 +21,7 @@ export function InstallPage() {
   useEffect(() => subscribeInstall(() => setReady(canPromptInstall())), []);
 
   return (
-    <PublicShell>
+    <AuthShell>
       <Page
         title="Installer Jaaykat"
         action={
@@ -66,7 +66,7 @@ export function InstallPage() {
           J'ai déjà une boutique
         </Link>
       </Page>
-    </PublicShell>
+    </AuthShell>
   );
 }
 
@@ -170,7 +170,7 @@ export function RegisterPage() {
 
   if (step === "shop") {
     return (
-      <PublicShell>
+      <AuthShell>
         <Page
           title="Créer ma boutique"
           action={
@@ -257,12 +257,12 @@ export function RegisterPage() {
             J'ai déjà une boutique
           </Link>
         </Page>
-      </PublicShell>
+      </AuthShell>
     );
   }
 
   return (
-    <PublicShell>
+    <AuthShell>
       <Page title="Code PIN">
         <p className="mb-4 text-sm">
           Ce code protège vos ventes et vos retraits. Notez-le : il ne peut pas être récupéré par SMS.
@@ -282,7 +282,7 @@ export function RegisterPage() {
         {block ? <p className="mb-3 text-sm text-warning">{block}</p> : null}
         <PinPad value={phase === "confirm" ? confirm : pin} onChange={onPin} disabled={phase === "submit" || Boolean(block)} shake={shake} />
       </Page>
-    </PublicShell>
+    </AuthShell>
   );
 }
 
@@ -324,7 +324,7 @@ export function LoginPage() {
   }
 
   return (
-    <PublicShell>
+    <AuthShell>
       <Page
         title="Se connecter"
         action={
@@ -371,13 +371,13 @@ export function LoginPage() {
           </Link>
         </div>
       </Page>
-    </PublicShell>
+    </AuthShell>
   );
 }
 
 export function ForgotPage() {
   return (
-    <PublicShell>
+    <AuthShell>
       <Page
         title="PIN oublié"
         action={
@@ -391,6 +391,6 @@ export function ForgotPage() {
           votre code sur place.
         </p>
       </Page>
-    </PublicShell>
+    </AuthShell>
   );
 }

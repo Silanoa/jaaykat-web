@@ -186,6 +186,50 @@ test("la page client reste une colonne étroite en 1440", async ({ page }) => {
   expect(box!.x + box!.width).toBeLessThan(1040);
 });
 
+test("connexion en 1440 : panneau de marque et formulaire en deux colonnes", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/app/login");
+  const heading = page.getByRole("heading", { name: "Se connecter" });
+  await expect(heading).toBeVisible();
+  const brand = page.getByTestId("auth-brand");
+  await expect(brand).toBeVisible();
+  const brandBox = await brand.boundingBox();
+  const headingBox = await heading.boundingBox();
+  expect(brandBox).not.toBeNull();
+  expect(headingBox).not.toBeNull();
+  expect(brandBox!.x).toBe(0);
+  expect(brandBox!.width).toBeGreaterThan(500);
+  expect(brandBox!.height).toBeGreaterThanOrEqual(880);
+  expect(headingBox!.x).toBeGreaterThan(brandBox!.width);
+  expect(headingBox!.x + headingBox!.width).toBeLessThan(1440);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(overflow).toBe(false);
+  await page.screenshot({ path: "test-results/connexion-1440.png", fullPage: true });
+});
+
+test("installation, inscription et PIN oublié gardent le panneau de marque en 1440", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const [path, title] of [
+    ["/app/install", "Installer Jaaykat"],
+    ["/app/register", "Créer ma boutique"],
+    ["/app/forgot", "PIN oublié"],
+  ]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+    await expect(page.getByTestId("auth-brand")).toBeVisible();
+  }
+  await page.screenshot({ path: "test-results/forgot-1440.png", fullPage: true });
+});
+
+test("connexion en 390 : pas de panneau de marque, colonne unique", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app/login");
+  await expect(page.getByRole("heading", { name: "Se connecter" })).toBeVisible();
+  await expect(page.getByTestId("auth-brand")).toBeHidden();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(overflow).toBe(false);
+});
+
 test("captures des écrans marchand en 1440", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await seedSession(page);

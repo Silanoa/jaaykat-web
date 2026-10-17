@@ -92,6 +92,52 @@ export function FocusShell() {
   );
 }
 
+const BRAND_POINTS = [
+  "Encaisser : un QR, le client choisit son moyen de paiement.",
+  "Décider : ventes, heures de pointe et clients fidèles.",
+  "Prouver : un score de régularité à partager.",
+  "Retirer : vers Wave, Orange Money, Free Money ou Expresso.",
+];
+
+function BrandPanel() {
+  return (
+    <aside
+      data-testid="auth-brand"
+      aria-label="Présentation de Jaaykat"
+      className="hidden bg-primary p-12 text-white lg:flex lg:min-h-dvh lg:flex-col lg:justify-between"
+    >
+      <div className="flex items-center gap-3">
+        <img src="/icons/icon-192.png" alt="" width={48} height={48} className="size-12 rounded-xl" />
+        <p className="text-2xl font-bold">Jaaykat</p>
+      </div>
+      <div className="max-w-md">
+        <p className="text-[40px] leading-[48px] font-bold">L'encaissement Lightning des petits commerces de Dakar.</p>
+        <ul className="mt-8 flex flex-col gap-3 text-lg">
+          {BRAND_POINTS.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-sm text-white/80">Démo Code &amp; Chain Dakar 2026 · paiement simulé, aucune somme réelle.</p>
+    </aside>
+  );
+}
+
+export function AuthShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="bg-bg text-ink lg:grid lg:min-h-dvh lg:grid-cols-[5fr_6fr]">
+      <BrandPanel />
+      <div className="mx-auto flex h-dvh w-full max-w-[480px] flex-col lg:h-auto lg:min-h-dvh lg:max-w-none">
+        <SandboxBanner />
+        <OfflineBanner />
+        <main className="flex min-h-0 flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[520px] lg:justify-center lg:py-10">
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-none">{children}</div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
 export function PublicShell({ children }: { children: ReactNode }) {
   return <AppFrame>{children}</AppFrame>;
 }
