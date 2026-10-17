@@ -6,6 +6,9 @@ export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
 export const networkSchema = z.enum(["wave", "orange", "free", "expresso"]);
 export type PayoutNetwork = z.infer<typeof networkSchema>;
 
+export const payMethodSchema = z.enum(["lightning", "wave", "orange", "free", "expresso"]);
+export type PayMethod = z.infer<typeof payMethodSchema>;
+
 export const payoutStatusSchema = z.enum([
   "quoted",
   "initiated",
@@ -24,7 +27,7 @@ export const invoiceSchema = z.object({
   bolt11: z.string().nullable(),
   demoPayment: z.boolean().optional(),
   payUrl: z.string().nullable().optional(),
-  payMethod: networkSchema.nullable().optional(),
+  payMethod: payMethodSchema.nullable().optional(),
   expiresAt: z.string().nullable(),
   paidAt: z.string().nullable(),
   label: z.string().nullable(),
@@ -69,7 +72,8 @@ export const publicInvoiceSchema = z.object({
   amountXof: z.number(),
   expiresAt: z.string().nullable(),
   demoPayment: z.boolean().optional(),
-  payMethod: networkSchema.nullable().optional(),
+  payMethod: payMethodSchema.nullable().optional(),
+  bolt11: z.string().optional(),
 });
 export type PublicInvoice = z.infer<typeof publicInvoiceSchema>;
 

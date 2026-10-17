@@ -1,4 +1,4 @@
-import type { InvoiceStatus, PayoutNetwork, PayoutStatus } from "./schemas";
+import type { InvoiceStatus, PayMethod, PayoutNetwork, PayoutStatus } from "./schemas";
 import { CATEGORIES } from "./validation";
 
 export function categoryLabel(value: string): string {
@@ -33,6 +33,10 @@ export function networkLabel(network: PayoutNetwork): string {
       return unreachable;
     }
   }
+}
+
+export function payMethodLabel(method: PayMethod): string {
+  return method === "lightning" ? "Portefeuille Lightning" : networkLabel(method);
 }
 
 export function invoiceBadge(status: InvoiceStatus): string {

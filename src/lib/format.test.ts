@@ -3,10 +3,10 @@ import { countdown, formatClock, formatSats, formatWhen, formatXof } from "./for
 
 describe("formatXof", () => {
   it("affiche les francs avec un espace insécable", () => {
-    expect(formatXof(12500)).toBe("12\u00A0500\u00A0F");
+    expect(formatXof(12500)).toBe("12\u202F500\u00A0F");
     expect(formatXof(500)).toBe("500\u00A0F");
     expect(formatXof(0)).toBe("0\u00A0F");
-    expect(formatXof(1500000)).toBe("1\u00A0500\u00A0000\u00A0F");
+    expect(formatXof(1500000)).toBe("1\u202F500\u202F000\u00A0F");
   });
 
   it("arrondit à l'entier le plus proche", () => {
@@ -17,7 +17,7 @@ describe("formatXof", () => {
 
 describe("formatSats", () => {
   it("affiche les sats fournis par l'API", () => {
-    expect(formatSats(4230)).toBe("4\u00A0230 sats");
+    expect(formatSats(4230)).toBe("4\u202F230 sats");
     expect(formatSats(0)).toBe("0 sats");
   });
 });
