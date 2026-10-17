@@ -1,13 +1,15 @@
-import { ChartColumn, Gauge, QrCode, Receipt, UserRound } from "lucide-react";
+import { ChartColumn, Gauge, LogOut, QrCode, Receipt, UserRound, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useOnline } from "../hooks/useOnline";
 import { useApi } from "../lib/api-context";
 import { subscribeUnauthenticated } from "../lib/auth-events";
 import { offlineBannerText } from "../lib/offline";
+import { signOut } from "../lib/sign-out";
 import { useSession } from "../stores/session";
 import { useToast } from "../stores/toast";
+import { Button } from "./ui";
 
 export function SessionListener() {
   const navigate = useNavigate();
@@ -52,21 +54,41 @@ export function AppFrame({ children, tabs = false }: { children: ReactNode; tabs
   );
 }
 
+function MerchantFrame({ children, tabs }: { children: ReactNode; tabs: boolean }) {
+  return (
+    <div className="mx-auto flex h-dvh w-full max-w-[480px] flex-col bg-bg text-ink lg:h-auto lg:min-h-dvh lg:max-w-none">
+      <Sidebar />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:pl-64">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1280px] flex-1 flex-col">
+          <SandboxBanner />
+          <OfflineBanner />
+          <main
+            className={`flex min-h-0 flex-1 flex-col ${tabs ? "pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0" : ""}`}
+          >
+            {children}
+          </main>
+        </div>
+      </div>
+      {tabs ? <TabBar /> : null}
+    </div>
+  );
+}
+
 export function MerchantShell() {
   useProfile();
   return (
-    <AppFrame tabs>
+    <MerchantFrame tabs>
       <Outlet />
-    </AppFrame>
+    </MerchantFrame>
   );
 }
 
 export function FocusShell() {
   useProfile();
   return (
-    <AppFrame>
+    <MerchantFrame tabs={false}>
       <Outlet />
-    </AppFrame>
+    </MerchantFrame>
   );
 }
 
@@ -77,8 +99,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
 export function ShopHeader() {
   const merchant = useSession((state) => state.merchant);
   return (
-    <header className="mb-2 flex items-center justify-between gap-3">
-      <p className="truncate text-lg font-semibold">{merchant?.displayName ?? "Jaaykat"}</p>
+    <header className="mb-2 flex items-center justify-between gap-3 lg:justify-end">
+      <p className="truncate text-lg font-semibold lg:hidden">{merchant?.displayName ?? "Jaaykat"}</p>
       <div className="flex items-center gap-1">
         <NavLink
           to="/app/balance"
@@ -101,9 +123,89 @@ const TABS = [
   { to: "/app/score", label: "Score", icon: Gauge },
 ] as const;
 
+const SIDE_LINKS = [
+  { to: "/app/charge", label: "Encaisser", icon: QrCode },
+  { to: "/app/sales", label: "Ventes", icon: Receipt },
+  { to: "/app/dashboard", label: "Tableau de bord", icon: ChartColumn },
+  { to: "/app/score", label: "Score", icon: Gauge },
+  { to: "/app/payout", label: "Retirer", icon: Wallet },
+] as const;
+
+function sideActive(to: string, pathname: string): boolean {
+  if (to === "/app/charge") return pathname === "/app/charge" || pathname.startsWith("/app/invoice");
+  if (to === "/app/payout") return pathname.startsWith("/app/payout");
+  return pathname === to;
+}
+
+function Sidebar() {
+  const merchant = useSession((state) => state.merchant);
+  const pathname = useLocation().pathname;
+  const navigate = useNavigate();
+  const api = useApi();
+  const online = useOnline();
+  const [confirm, setConfirm] = useState(false);
+
+  async function logout() {
+    await signOut(api, online);
+    navigate("/app/login", { replace: true });
+  }
+
+  return (
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-black/10 lg:bg-surface">
+      <div className="flex items-center gap-3 px-4 pt-5">
+        <img src="/icons/icon-192.png" alt="" width={36} height={36} className="size-9 rounded-lg" />
+        <p className="text-lg font-bold">Jaaykat</p>
+      </div>
+      <p className="truncate px-4 pt-3 text-sm font-semibold">{merchant?.displayName ?? "Boutique"}</p>
+      <nav aria-label="Espace marchand" className="mt-4 flex min-h-0 flex-1 flex-col gap-1 px-2 pb-4">
+        {SIDE_LINKS.map((link) => {
+          const Icon = link.icon;
+          const active = sideActive(link.to, pathname);
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm ${active ? "bg-success-bg font-semibold text-primary" : "text-ink"}`}
+            >
+              <Icon aria-hidden="true" size={20} />
+              {link.label}
+            </NavLink>
+          );
+        })}
+        <button
+          type="button"
+          className="mt-auto flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm text-danger"
+          onClick={() => setConfirm(true)}
+        >
+          <LogOut aria-hidden="true" size={20} />
+          Déconnexion
+        </button>
+      </nav>
+      {confirm ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4" role="dialog" aria-modal="true" aria-label="Confirmer la déconnexion">
+          <div className="w-full max-w-sm rounded-2xl bg-surface p-4">
+            <p>Vous devrez saisir votre numéro et votre PIN pour revenir.</p>
+            <div className="mt-4 grid gap-2">
+              <Button type="button" variant="danger" onClick={() => void logout()}>
+                Se déconnecter
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setConfirm(false)}>
+                Annuler
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
 function TabBar() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 mx-auto grid w-full max-w-[480px] grid-cols-4 border-t border-black/10 bg-surface pb-[env(safe-area-inset-bottom)]">
+    <nav
+      aria-label="Navigation principale"
+      className="fixed inset-x-0 bottom-0 z-20 mx-auto grid w-full max-w-[480px] grid-cols-4 border-t border-black/10 bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+    >
       {TABS.map((tab) => {
         const Icon = tab.icon;
         return (

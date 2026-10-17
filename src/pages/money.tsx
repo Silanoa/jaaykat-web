@@ -11,7 +11,7 @@ import { useApi } from "../lib/api-context";
 import { countdown, formatSats, formatWhen, formatXof } from "../lib/format";
 import { networkLabel, payoutStatusLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
-import { queryClient } from "../lib/query-client";
+import { signOut } from "../lib/sign-out";
 import { readQuickAmounts, writeQuickAmounts } from "../lib/quick-amounts";
 import type { PayoutNetwork, PayoutQuote } from "../lib/schemas";
 import { normalizePhone, payoutAmountError } from "../lib/validation";
@@ -138,6 +138,8 @@ export function PayoutFormPage() {
     >
       <BackButton to="/app/balance" />
       <h1 className="mb-2 text-[28px] font-bold">Retrait</h1>
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
+      <div>
       <p className="mb-2 text-sm text-muted">Entre 100 et 200 000 F. Simulation sandbox : aucun argent réel.</p>
       <AmountReadout value={amount} />
       {amountError ? <p className="text-center text-sm text-danger">{amountError}</p> : null}
@@ -165,6 +167,17 @@ export function PayoutFormPage() {
         <Field id="payout-name" label="Nom du titulaire">
           <input id="payout-name" className={inputClass} value={name} onChange={(event) => setName(event.target.value)} />
         </Field>
+      </div>
+      </div>
+      <aside className="mt-6 hidden rounded-2xl bg-surface p-6 lg:block">
+        <h2 className="text-lg font-semibold">Récapitulatif</h2>
+        <p className="mt-3 text-sm text-muted">Montant</p>
+        <p className="tabular text-2xl font-bold">{formatXof(amount)}</p>
+        <p className="mt-3 text-sm">{networkLabel(network)}</p>
+        <p className="text-sm">{phoneOk ?? "Numéro à saisir"}</p>
+        <p className="text-sm">{name.trim() || "Titulaire à saisir"}</p>
+        <p className="mt-3 text-sm text-muted">Le montant reçu et les frais viennent du devis, pas d'un calcul dans l'application.</p>
+      </aside>
       </div>
     </Page>
   );
@@ -222,14 +235,20 @@ export function PayoutConfirmPage() {
       }
     >
       <p className="text-sm text-info">Simulation, aucun argent réel.</p>
-      <p className="mt-4 text-sm text-muted">Montant envoyé</p>
-      <p className="tabular text-2xl font-bold">{formatXof(quote.amountXof)}</p>
-      <p className="mt-3 text-sm text-muted">Montant reçu</p>
-      <p className="tabular text-2xl font-bold">{formatXof(quote.receivedXof)}</p>
-      <p className="mt-3 text-sm">Taux {quote.exchangeRate} · frais {quote.fees}</p>
-      <p className="text-sm">
-        {networkLabel(quote.network)} · {quote.accountNumberMasked} · {quote.accountName}
-      </p>
+      <div className="mt-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+        <div>
+          <p className="text-sm text-muted">Montant envoyé</p>
+          <p className="tabular text-2xl font-bold">{formatXof(quote.amountXof)}</p>
+          <p className="mt-3 text-sm text-muted">Montant reçu</p>
+          <p className="tabular text-2xl font-bold">{formatXof(quote.receivedXof)}</p>
+        </div>
+        <div>
+          <p className="text-sm">Taux {quote.exchangeRate} · frais {quote.fees}</p>
+          <p className="text-sm">
+            {networkLabel(quote.network)} · {quote.accountNumberMasked} · {quote.accountName}
+          </p>
+        </div>
+      </div>
       {clock ? (
         <p className={`mt-3 tabular ${clock.urgent || clock.expired ? "text-warning" : ""}`}>
           {clock.expired ? "Devis expiré" : `Valable encore ${clock.mmss} · expire à ${clock.expiresClock}`}
@@ -315,19 +334,7 @@ export function SettingsPage() {
   }
 
   async function logout() {
-    if (online) {
-      try {
-        await api.logout();
-      } catch {
-        useToast.getState().show("Déconnexion locale : le serveur n'a pas répondu.");
-      }
-    }
-    useSession.getState().clear();
-    queryClient.clear();
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
-    }
+    await signOut(api, online);
     navigate("/app/login", { replace: true });
   }
 
