@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { formatSats, formatWhen, formatXof } from "../lib/format";
-import { shortProof } from "../lib/labels";
 import { CopyButton } from "./copy-button";
+
+function displayProof(value: string): string {
+  return value.length > 18 ? `${value.slice(0, 8)}\u2026${value.slice(-6)}` : value;
+}
 
 export function CheckBadge() {
   return (
@@ -19,12 +22,13 @@ export interface PaidViewProps {
   amountSats?: number | null;
   paidAt?: string | null;
   subject?: string | null;
+  subjectLabel?: string;
   proof: { kind: "Preuve" | "Référence"; value: string };
   primary: ReactNode;
   secondary?: ReactNode;
 }
 
-export function PaidView({ title, amountXof, amountSats, paidAt, subject, proof, primary, secondary }: PaidViewProps) {
+export function PaidView({ title, amountXof, amountSats, paidAt, subject, subjectLabel = "Boutique", proof, primary, secondary }: PaidViewProps) {
   return (
     <section className="jk-fade-in flex min-h-0 flex-1 flex-col items-center px-6 pt-8 pb-6 text-center" aria-live="polite">
       <div className="my-auto flex w-full max-w-sm flex-col items-center">
@@ -35,7 +39,7 @@ export function PaidView({ title, amountXof, amountSats, paidAt, subject, proof,
         <dl className="mt-8 w-full divide-y divide-black/10 rounded-2xl bg-surface text-left text-sm shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
           {subject ? (
             <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <dt className="text-muted">Boutique</dt>
+              <dt className="text-muted">{subjectLabel}</dt>
               <dd className="truncate font-medium">{subject}</dd>
             </div>
           ) : null}
@@ -48,7 +52,7 @@ export function PaidView({ title, amountXof, amountSats, paidAt, subject, proof,
           <div className="flex items-center justify-between gap-2 py-1 pr-1 pl-4">
             <dt className="text-muted">{proof.kind}</dt>
             <dd className="flex items-center gap-1 font-medium tabular">
-              {shortProof(proof.value)}
+              {displayProof(proof.value)}
               <CopyButton value={proof.value} label={`Copier la ${proof.kind === "Preuve" ? "preuve" : "référence"}`} />
             </dd>
           </div>

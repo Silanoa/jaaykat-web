@@ -53,7 +53,7 @@ describe("états des écrans", () => {
           }),
       }),
     );
-    await userEvent.type(screen.getByLabelText("Téléphone"), "771234567");
+    await userEvent.type(await screen.findByLabelText("Téléphone"), "771234567");
     await userEvent.click(screen.getByRole("button", { name: "1" }));
     await userEvent.click(screen.getByRole("button", { name: "2" }));
     await userEvent.click(screen.getByRole("button", { name: "3" }));
