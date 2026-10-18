@@ -11,6 +11,7 @@ Dernière passe : 17 oct. 2026, sandbox Bitnob, API `jaaykat-api` et PWA `jaayka
 | Typage | `tsc --noEmit` | passe |
 | Parcours marchand de bout en bout avec API simulée (inscription, connexion, encaisser, QR, payé, tableau, score, retrait, solde, hors ligne) | Playwright `e2e/demo.spec.ts` | passe |
 | Mise en page bureau/mobile (barre latérale, onglets, colonne client, panneau de marque) | Playwright `e2e/layout.spec.ts` | passe |
+| Retrait (vignettes de réseau 44 px, zones tactiles, sélection sans décalage), attestation publique, score inéligible, solde avec démonstration, en 390 et 1440 | Playwright `e2e/payout-attestation.spec.ts` | passe |
 | Audit responsive : 17 écrans × 7 largeurs (320, 360, 390, 768, 1024, 1440, 1920) | Playwright `e2e/audit.spec.ts` | 0 constat |
 
 L'audit responsive échoue s'il détecte : défilement horizontal, élément hors écran, chevauchement de deux contrôles, cible tactile sous 44 px, champ sous 16 px, texte sous 12 px, texte coupé. Les captures sont écrites dans `test-results/audit/`.
@@ -24,6 +25,9 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 - Page client `/p/:slug?facture=…` : synthèse boutique et montant, 5 moyens (Portefeuille Lightning, Wave, Orange Money, Yas, Expresso), étape « Confirmer le paiement de X F », « Paiement en cours » avec étapes Envoi, Confirmation, Reçu pilotées par le statut renvoyé par l'API, écran « Paiement reçu ».
 - Portefeuille Lightning : QR de la facture bolt11, bouton « Copier la facture », lien `lightning:` « Ouvrir mon portefeuille », mention honnête que le règlement sandbox est simulé.
 - Tableau de bord, ventes, score et attestation, retrait avec devis, solde.
+- Retrait : quatre vignettes de réseau (logo 44 px, texte alternatif, zone tactile d'au moins 48 px, coche et fond sur le réseau choisi) ; le solde retirable est affiché au-dessus du pavé et un montant au-delà est refusé avec ce solde.
+- Solde : « Solde retirable » d'un côté, « Chiffre d'affaires de démonstration » de l'autre, avec la mention « Non retirable » ; rien de tel pour un marchand sans historique simulé.
+- Attestation : bouton désactivé avec « Encore X ventes payées et Y jours pour être éligible » ; émission puis lien, QR et durée de 7 jours ; refus du serveur affiché. Page publique : boutique, période, ventes payées, montant en F, score sur 100, date d'émission, identifiant, ce qu'elle atteste et n'atteste pas, règles, QR de vérification ; aucun téléphone. Un compte de démonstration porte le bandeau « Démonstration », un réseau de test le bandeau correspondant. Il n'y a ni PDF ni image.
 - Page boutique publique sans session.
 - Hors ligne : lecture du tableau en cache, encaissement bloqué avec message.
 - Erreur réseau ou API : les lectures sont réessayées (3 fois, attente progressive) puis l'état d'erreur avec bouton « Réessayer » s'affiche. 400, 401, 404, 409 et 422 s'affichent tout de suite. Une 401 redirige vers la connexion et vide le cache local. Sur facture marchand, solde et suivi de retrait, un rafraîchissement qui échoue garde les données affichées et n'avertit qu'après 15 s ; le journal API garde aussi ses données, sans avertissement.

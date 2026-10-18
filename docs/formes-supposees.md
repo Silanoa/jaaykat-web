@@ -68,6 +68,10 @@ La facture marchand (`POST` et `GET /api/invoices`) et la facture publique cré�
   "score": 71,
   "band": "B",
   "eligible": true,
+  "demo": false,
+  "windowDays": 90,
+  "thresholds": { "days": 14, "sales": 20 },
+  "remaining": { "days": 0, "sales": 0 },
   "computedAt": "2026-10-17T18:00:00.000Z",
   "progress": { "daysSinceFirst": 6, "salesCount": 12 },
   "components": [{ "key": "regularity", "value": 0.76 }],
@@ -75,9 +79,9 @@ La facture marchand (`POST` et `GET /api/invoices`) et la facture publique cré�
 }
 ```
 
-`components.key` : `regularity | growth | volume | loyalty | quality`. `value` entre 0 et 1. `progress` peut être `null`.
+`components.key` : `regularity | growth | volume | loyalty | quality`. `value` entre 0 et 1. `progress` peut être `null`. `demo` est vrai quand le score inclut un historique simulé ; `remaining` dit ce qu'il manque pour être éligible (le texte « Encore X ventes payées et Y jours » est composé à partir de ces deux nombres, sans calcul du score). `POST /api/score/share` répond 422 `NOT_ELIGIBLE` tant que `eligible` est faux ; le bouton est alors désactivé avec cette explication.
 
-`GET /api/balance` → `{ balanceXof, balanceSats, lastPayouts: [{ id, amountXof, network, status, createdAt }] }`
+`GET /api/balance` → `{ balanceXof, balanceSats, demoRevenueXof, demoSalesCount, lastPayouts: [{ id, amountXof, network, status, createdAt }] }`. `balanceXof` est le solde retirable ; `demoRevenueXof` et `demoSalesCount` décrivent l'historique de démonstration, affiché à part et jamais retirable.
 
 `quote` : `{ id, amountXof, receivedXof, exchangeRate, fees, network, accountNumberMasked, accountName, expiresAt }`
 
@@ -89,7 +93,7 @@ La facture marchand (`POST` et `GET /api/invoices`) et la facture publique cré�
 
 ## Attestation
 
-`GET /api/public/shares/:token` est documentée dans `CONTRACTS.md` de `jaaykat-api` : `{ shopName, score, band, period, salesCount, computedAt, expiresAt, status }`, `status` : `valid | expired | revoked`, jeton inconnu : 404 (écran « Attestation introuvable »).
+`GET /api/public/shares/:token` est documentée dans `CONTRACTS.md` de `jaaykat-api` : `{ attestationId, shopName, status, issuedAt, expiresAt, demo, environment, windowDays, score, band, period: { from, to }, salesCount, totalXof }`, `status` : `valid | expired | revoked` (révoquée : `score`, `band`, `period`, `salesCount` et `totalXof` valent `null`), jeton inconnu : 404 (écran « Attestation introuvable »). La page `/s/:token` affiche ces champs, ce que l'attestation atteste et n'atteste pas, les règles de calcul et un QR vers la page. `demo` vrai : bandeau « Démonstration ». `environment` autre que `live` ou `production` : bandeau sur le réseau de test.
 
 ## Préférences locales, pas des routes
 

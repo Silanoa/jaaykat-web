@@ -6,7 +6,8 @@ Le paiement du client passe par la page `/p/<slug>`. En sandbox, deux modes coex
 
 ## Ce qui est simulé
 
-- Les ventes d'historique marquées `source: seed` par l'API portent le badge « Historique simulé ». Elles ne sont pas retirables. Le solde affiché est celui du ledger renvoyé par `GET /api/balance`.
+- Les ventes d'historique marquées `source: seed` par l'API portent le badge « Historique simulé ». Elles ne sont pas retirables. L'écran Solde montre le « Solde retirable » (ledger renvoyé par `GET /api/balance`) et, à part, le « Chiffre d'affaires de démonstration » ; le tableau de bord et le score affichent « Données de démonstration » quand l'API le signale.
+- L'attestation n'est émise que pour un marchand éligible (14 jours, 20 ventes payées). Celle d'un compte avec historique simulé est étiquetée « Démonstration » et n'atteste rien de réel ; celle d'un marchand réel signale aussi le réseau de test tant que Bitnob répond en sandbox.
 - Le paiement de la démo est un règlement sandbox, pas un paiement réel. En mode manuel, le choix Lightning / Wave / Orange Money / Yas / Expresso ne débite aucun compte.
 - Il n'y a pas d'on-ramp Orange Money : un compte mobile money ne paie pas la facture. Hors démo, il faut un portefeuille Lightning. Le texte est sur « Comment payer ? ».
 - Le numéro de téléphone est un identifiant déclaré. Aucun SMS n'est envoyé. Un PIN oublié se réinitialise sur le serveur, pas dans l'application.

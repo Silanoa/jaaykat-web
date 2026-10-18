@@ -68,11 +68,9 @@ export function BalancePage() {
       {query.data ? (
         <div>
           <p className="text-sm font-medium text-muted">Solde retirable</p>
-          {query.data.balanceXof === 0 ? (
-            <p className="mb-1 text-sm">Pas encore de ventes retirables.</p>
-          ) : null}
           <p className="tabular text-[40px] leading-[48px] font-bold">{formatXof(query.data.balanceXof)}</p>
           <p className="text-sm text-muted">{formatSats(query.data.balanceSats)}</p>
+          {query.data.balanceXof === 0 ? <p className="mt-2 text-sm">Pas encore de ventes retirables.</p> : null}
           <p className="mt-3 text-sm text-muted">
             Ventes payées en direct moins vos retraits. Ce solde est le ledger interne, pas un compte mobile money.
           </p>
