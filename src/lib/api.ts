@@ -71,7 +71,7 @@ export class ApiError extends Error {
 type RequestOptions<T> = {
   method?: string;
   body?: unknown;
-  schema?: ZodType<T>;
+  schema?: ZodType<T, z.ZodTypeDef, unknown>;
   idempotencyKey?: string;
   empty?: boolean;
 };

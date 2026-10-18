@@ -256,8 +256,16 @@ describe("paiement client résilient", () => {
     expect(wave.querySelector("img")).toHaveAttribute("height", "44");
     const orange = screen.getByRole("button", { name: /^Orange Money/ });
     expect(orange.querySelector("img")).toHaveAttribute("alt", "Logo Orange Money");
-    for (const name of [/^Free Money/, /^Expresso/, /^Portefeuille Lightning/]) {
-      expect(screen.getByRole("button", { name }).querySelector("[data-pay-logo]")).not.toBeNull();
+    const yas = screen.getByRole("button", { name: /^Yas/ });
+    expect(yas.querySelector("img")).toHaveAttribute("alt", "Logo Yas");
+    const expresso = screen.getByRole("button", { name: /^Expresso/ });
+    expect(expresso.querySelector("img")).toHaveAttribute("alt", "Logo Expresso");
+    expect(screen.getByRole("button", { name: /^Portefeuille Lightning/ }).querySelector("[data-pay-logo=lightning]")).not.toBeNull();
+    for (const image of Array.from(document.querySelectorAll("img[alt^='Logo']"))) {
+      expect(image).toHaveAttribute("width", "44");
+      expect(image).toHaveAttribute("height", "44");
     }
+    expect(screen.queryByText("free")).not.toBeInTheDocument();
+    expect(screen.queryByText("ex")).not.toBeInTheDocument();
   });
 });

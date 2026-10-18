@@ -96,7 +96,7 @@ const BRAND_POINTS = [
   "Encaisser : un QR, le client choisit son moyen de paiement.",
   "Décider : ventes, heures de pointe et clients fidèles.",
   "Prouver : un score de régularité à partager.",
-  "Retirer : vers Wave, Orange Money, Free Money ou Expresso.",
+  "Retirer : vers Wave, Orange Money, Yas ou Expresso.",
 ];
 
 function BrandPanel() {

@@ -171,7 +171,7 @@ describe("états des écrans", () => {
     expect(await screen.findByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
     expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
-    for (const name of [/^Portefeuille Lightning/, /^Wave/, /^Orange Money/, /^Free Money/, /^Expresso/]) {
+    for (const name of [/^Portefeuille Lightning/, /^Wave/, /^Orange Money/, /^Yas/, /^Expresso/]) {
       expect(screen.getByRole("button", { name })).toBeEnabled();
     }
     await user.click(screen.getByRole("button", { name: /^Wave/ }));
@@ -191,7 +191,7 @@ describe("états des écrans", () => {
       if (path === "/api/health") return jsonResponse(200, { ok: true, bitnob: true, demoPayMode: "manual" });
       return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
     });
-    expect(await screen.findByText(/vous choisissez Wave, Orange Money, Free Money ou Expresso/)).toBeInTheDocument();
+    expect(await screen.findByText(/vous choisissez Wave, Orange Money, Yas ou Expresso/)).toBeInTheDocument();
     expect(screen.queryByText(/toute seule/)).not.toBeInTheDocument();
     expect(screen.queryByText(/portefeuille/)).not.toBeInTheDocument();
   });
@@ -311,7 +311,7 @@ describe("états des écrans", () => {
     });
     await user.click(await screen.findByRole("button", { name: /^Orange Money/ }));
     await user.click(screen.getByRole("button", { name: "Changer de moyen" }));
-    expect(await screen.findByRole("button", { name: /^Free Money/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^Yas/ })).toBeInTheDocument();
     expect(calls).toBe(0);
   });
 

@@ -31,7 +31,7 @@ La facture marchand (`POST` et `GET /api/invoices`) et la facture publique cré�
 
 `GET /api/public/invoices/:id` ajoute `demoPayment` et `payMethod` (`null` tant que personne n'a payé).
 
-`POST /api/public/invoices/:id/pay` corps `{ "method": "wave" | "orange" | "free" | "expresso" }` → `{ status, amountXof, expiresAt, demoPayment: true, payMethod }`. Pas de clé d'idempotence dans ce contrat. Si la réponse finale de l'API diffère, réaligner `src/lib/schemas.ts` sur elle.
+`POST /api/public/invoices/:id/pay` corps `{ "method": "wave" | "orange" | "yas" | "expresso" }` (`free` accepté comme alias de `yas`) → `{ status, amountXof, expiresAt, demoPayment: true, payMethod }`. Pas de clé d'idempotence dans ce contrat. Si la réponse finale de l'API diffère, réaligner `src/lib/schemas.ts` sur elle.
 
 ## Champs supposés, à confirmer côté API
 

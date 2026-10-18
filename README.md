@@ -2,12 +2,12 @@
 
 Application web installable pour un petit commerce à Dakar : encaisser un montant en francs CFA, montrer un QR Lightning, suivre les ventes, le tableau de bord et le score de régularité. Le même site sert sur téléphone, installé en plein écran. Il n'y a pas d'application native ni de fiche de store.
 
-Le paiement du client passe par la page `/p/<slug>`. En sandbox, deux modes coexistent. Sans `payUrl`, la facture Lightning se règle toute seule en quelques secondes. Avec `demoPayment` et `payUrl`, le client scanne le QR, ouvre la page et choisit Wave, Orange Money, Free Money ou Expresso. Le débit est simulé : l'écran affiche « Démo : paiement simulé, aucune somme réelle », et « Paiement reçu » n'apparaît que lorsque l'API renvoie `paid`. Ce n'est pas un encaissement réel. Le mobile money réel sert seulement au retrait, via le backend.
+Le paiement du client passe par la page `/p/<slug>`. En sandbox, deux modes coexistent. Sans `payUrl`, la facture Lightning se règle toute seule en quelques secondes. Avec `demoPayment` et `payUrl`, le client scanne le QR, ouvre la page et choisit Wave, Orange Money, Yas ou Expresso. Le débit est simulé : l'écran affiche « Démo : paiement simulé, aucune somme réelle », et « Paiement reçu » n'apparaît que lorsque l'API renvoie `paid`. Ce n'est pas un encaissement réel. Le mobile money réel sert seulement au retrait, via le backend.
 
 ## Ce qui est simulé
 
 - Les ventes d'historique marquées `source: seed` par l'API portent le badge « Historique simulé ». Elles ne sont pas retirables. Le solde affiché est celui du ledger renvoyé par `GET /api/balance`.
-- Le paiement de la démo est un règlement sandbox, pas un paiement réel. En mode manuel, le choix Wave / Orange Money / Free Money / Expresso ne débite aucun compte.
+- Le paiement de la démo est un règlement sandbox, pas un paiement réel. En mode manuel, le choix Wave / Orange Money / Yas / Expresso ne débite aucun compte.
 - Il n'y a pas d'on-ramp Orange Money : un compte mobile money ne paie pas la facture. Hors démo, il faut un portefeuille Lightning. Le texte est sur « Comment payer ? ».
 - Le numéro de téléphone est un identifiant déclaré. Aucun SMS n'est envoyé. Un PIN oublié se réinitialise sur le serveur, pas dans l'application.
 - Le score est indicatif. Il n'est pas recalculé dans le navigateur.

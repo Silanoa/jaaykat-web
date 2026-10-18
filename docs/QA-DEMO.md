@@ -21,7 +21,7 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 
 - Inscription avec un nom normal, connexion, PIN refusé puis accepté, déconnexion.
 - Encaissement : montant rapide ou pavé, génération du QR, attente, écran « Payé », « Nouvelle vente ».
-- Page client `/p/:slug?facture=…` : synthèse boutique et montant, 5 moyens (Portefeuille Lightning, Wave, Orange Money, Free Money, Expresso), étape « Confirmer le paiement de X F », « Paiement en cours » avec étapes Envoi, Confirmation, Reçu pilotées par le statut renvoyé par l'API, écran « Paiement reçu ».
+- Page client `/p/:slug?facture=…` : synthèse boutique et montant, 5 moyens (Portefeuille Lightning, Wave, Orange Money, Yas, Expresso), étape « Confirmer le paiement de X F », « Paiement en cours » avec étapes Envoi, Confirmation, Reçu pilotées par le statut renvoyé par l'API, écran « Paiement reçu ».
 - Portefeuille Lightning : QR de la facture bolt11, bouton « Copier la facture », lien `lightning:` « Ouvrir mon portefeuille », mention honnête que le règlement sandbox est simulé.
 - Tableau de bord, ventes, score et attestation, retrait avec devis, solde.
 - Page boutique publique sans session.
@@ -51,7 +51,7 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 
 ## Limites connues
 
-- Sandbox Bitnob : aucune simulation de paiement d'une facture Lightning. En mode démo (`DEMO_PAY_MODE=manual`), le règlement est déclenché par l'auto-settle de la facture Bitnob créée au moment du choix du moyen. Le choix Wave, Orange Money, Free Money ou Expresso est un libellé de démonstration, sans écran d'opérateur. Les vignettes identifient seulement le moyen choisi : logo Wave (icône officielle du site) et logo Orange, vignettes aux couleurs de la marque pour Free Money (devenu Mixx by Yas), Expresso et le portefeuille Lightning, faute de logo officiel libre.
+- Sandbox Bitnob : aucune simulation de paiement d'une facture Lightning. En mode démo (`DEMO_PAY_MODE=manual`), le règlement est déclenché par l'auto-settle de la facture Bitnob créée au moment du choix du moyen. Le choix Wave, Orange Money, Yas ou Expresso est un libellé de démonstration, sans écran d'opérateur. Les vignettes de 44 px identifient seulement le moyen choisi : Wave (icône du site wave.com), Orange Money (pictogramme des deux flèches, SVG Wikimedia Commons du logo Orange Money), Yas (logo Yas depuis 2024, SVG Wikimedia Commons, ex-Free Sénégal) et Expresso (icône du site expressotelecom.sn). Le portefeuille Lightning garde un pictogramme d'éclair. `free` reste lu comme `yas` ; le `network` des retraits reste `free`, valeur attendue par Bitnob, affichée Yas.
 - Le portefeuille Lightning affiche un vrai bolt11 sandbox ; un portefeuille mainnet ne peut pas le payer.
 - Pas de page 404 dédiée : une adresse inconnue renvoie vers `/app`.
 - Le chargement initial de la page client demande un fichier de plus (route à la demande) ; sur réseau lent, un fond uni s'affiche pendant ce temps.

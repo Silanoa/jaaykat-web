@@ -6,7 +6,10 @@ export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
 export const networkSchema = z.enum(["wave", "orange", "free", "expresso"]);
 export type PayoutNetwork = z.infer<typeof networkSchema>;
 
-export const payMethodSchema = z.enum(["lightning", "wave", "orange", "free", "expresso"]);
+export const payMethodSchema = z.preprocess(
+  (value) => (value === "free" ? "yas" : value),
+  z.enum(["lightning", "wave", "orange", "yas", "expresso"]),
+);
 export type PayMethod = z.infer<typeof payMethodSchema>;
 
 export const payoutStatusSchema = z.enum([

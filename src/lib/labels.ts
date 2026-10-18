@@ -25,7 +25,7 @@ export function networkLabel(network: PayoutNetwork): string {
     case "orange":
       return "Orange Money";
     case "free":
-      return "Free Money";
+      return "Yas";
     case "expresso":
       return "Expresso";
     default: {
@@ -36,7 +36,12 @@ export function networkLabel(network: PayoutNetwork): string {
 }
 
 export function payMethodLabel(method: PayMethod): string {
-  return method === "lightning" ? "Portefeuille Lightning" : networkLabel(method);
+  if (method === "lightning") return "Portefeuille Lightning";
+  return method === "yas" ? "Yas" : networkLabel(method);
+}
+
+export function payWithLabel(method: PayMethod): string {
+  return method === "lightning" ? "votre portefeuille Lightning" : payMethodLabel(method);
 }
 
 export function invoiceBadge(status: InvoiceStatus): string {

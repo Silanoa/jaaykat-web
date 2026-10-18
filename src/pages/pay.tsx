@@ -16,7 +16,7 @@ import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
 import { getDeviceId } from "../lib/device";
 import { countdown, formatXof } from "../lib/format";
-import { categoryLabel, payMethodLabel } from "../lib/labels";
+import { categoryLabel, payMethodLabel, payWithLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
 import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS, pollRetryDelay } from "../lib/resilience";
 import { payChoices, payProgress, publicPayPhase } from "../lib/pay-demo";
@@ -340,7 +340,8 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
               <dd className="tabular text-lg font-bold">{formatXof(amount)}</dd>
             </div>
           </dl>
-          <p className="mt-4 text-sm text-muted">
+          <p className="mt-4 text-sm font-medium">Vous payez avec {payWithLabel(selected)}.</p>
+          <p className="mt-2 text-sm text-muted">
             {lightning
               ? "Vous payez la facture Lightning avec votre portefeuille. En démo sandbox, le règlement est simulé : le réseau de test ne permet pas de payer réellement."
               : "Démo : le paiement est simulé, aucune somme réelle n'est débitée."}
@@ -364,7 +365,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
           {payMethod ? (
             <p className="mt-2 flex items-center gap-2 text-sm text-muted">
               <PayLogo method={payMethod} size={28} />
-              {payMethodLabel(payMethod)}
+              Paiement avec {payWithLabel(payMethod)}
             </p>
           ) : null}
           <div className="mt-6">
@@ -442,7 +443,7 @@ function Help({ slug }: { slug: string }) {
         {simulated ? (
           <p>
             Démo : aucune somme réelle n'est débitée. Après avoir scanné le QR, vous choisissez Wave, Orange Money,
-            Free Money ou Expresso, puis le paiement est simulé.
+            Yas ou Expresso, puis le paiement est simulé.
           </p>
         ) : (
           <>

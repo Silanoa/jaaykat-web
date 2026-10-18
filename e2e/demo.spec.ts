@@ -10,7 +10,7 @@ const merchant = {
 };
 const session = { expiresAt: "2099-01-01T00:00:00.000Z" };
 
-type PayMethod = "wave" | "orange" | "free" | "expresso";
+type PayMethod = "wave" | "orange" | "yas" | "expresso";
 
 type Invoice = {
   id: string;

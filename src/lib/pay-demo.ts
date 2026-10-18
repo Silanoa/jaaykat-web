@@ -50,7 +50,7 @@ export interface PayChoice {
 }
 
 export function payChoices(): PayChoice[] {
-  const methods: PayMethod[] = ["lightning", "wave", "orange", "free", "expresso"];
+  const methods: PayMethod[] = ["lightning", "wave", "orange", "yas", "expresso"];
   return methods.map((method) => ({
     method,
     label: payMethodLabel(method),

@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { payMethodLabel, payWithLabel } from "./labels";
+import { publicInvoiceSchema } from "./schemas";
 import { invoiceQrPayload, lightningUri, merchantWaitCopy, payChoices, payProgress, publicPayPhase, updatedAgo } from "./pay-demo";
 
 describe("paiement démo manuel", () => {
@@ -44,12 +46,12 @@ describe("paiement démo manuel", () => {
   });
 
   it("liste le portefeuille Lightning puis les quatre moyens mobiles, avec des libellés neutres", () => {
-    expect(payChoices().map((choice) => choice.method)).toEqual(["lightning", "wave", "orange", "free", "expresso"]);
+    expect(payChoices().map((choice) => choice.method)).toEqual(["lightning", "wave", "orange", "yas", "expresso"]);
     expect(payChoices().map((choice) => choice.label)).toEqual([
       "Portefeuille Lightning",
       "Wave",
       "Orange Money",
-      "Free Money",
+      "Yas",
       "Expresso",
     ]);
     expect(payChoices()[0]?.hint).toBe("Application Lightning de l'acheteur");
@@ -79,4 +81,12 @@ describe("paiement démo manuel", () => {
     expect(updatedAgo(3_700_000)).toBe("mis à jour il y a plus d'une heure");
   });
 
+
+  it("relit free comme yas dans les réponses de l'API", () => {
+    const parsed = publicInvoiceSchema.parse({ status: "pending", amountXof: 2500, expiresAt: null, payMethod: "free" });
+    expect(parsed.payMethod).toBe("yas");
+    expect(payMethodLabel("yas")).toBe("Yas");
+    expect(payWithLabel("yas")).toBe("Yas");
+    expect(payWithLabel("lightning")).toBe("votre portefeuille Lightning");
+  });
 });
