@@ -1,14 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Smartphone, Zap } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { LightningPanel } from "../components/lightning-panel";
 import { PaidView } from "../components/paid-view";
+import { PayLogo } from "../components/pay-logo";
 import { AmountPad, AmountReadout } from "../components/pads";
 import { PayStepper } from "../components/pay-stepper";
 import { PublicShell } from "../components/shell";
 import { Button, ErrorState, Page, Skeleton } from "../components/ui";
 import { useNow } from "../hooks/useNow";
+import { usePayStart } from "../hooks/usePayStart";
 import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
@@ -16,8 +18,9 @@ import { getDeviceId } from "../lib/device";
 import { countdown, formatXof } from "../lib/format";
 import { categoryLabel, payMethodLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
+import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS, pollRetryDelay } from "../lib/resilience";
 import { payChoices, payProgress, publicPayPhase } from "../lib/pay-demo";
-import { invoiceSchema, type Invoice, type PayMethod } from "../lib/schemas";
+import { invoiceSchema, type Invoice, type PayMethod, type PublicInvoice } from "../lib/schemas";
 import { isTerminalInvoice, invoiceStatusLabel } from "../lib/status";
 
 function saveCreated(invoice: Invoice) {
@@ -155,48 +158,62 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const [, setParams] = useSearchParams();
   const created = readCreated(invoiceId);
   const [selected, setSelected] = useState<PayMethod | null>(null);
-  const [chosen, setChosen] = useState<PayMethod | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const mountedAt = useRef(Date.now());
   const block = postBlockReason("public-invoice", online);
   const shop = useQuery({ queryKey: ["shop", slug], queryFn: () => api.getShop(slug), retry: false });
+  const queryKey = ["public-invoice", invoiceId];
   const poll = useQuery({
-    queryKey: ["public-invoice", invoiceId],
+    queryKey,
     queryFn: () => api.getPublicInvoice(invoiceId),
+    retry: (failureCount, caught) => !(caught instanceof ApiError && caught.status === 404) && failureCount < 3,
+    retryDelay: pollRetryDelay,
     refetchInterval: (state) => {
-      const status = state.state.data?.status;
-      if (status && isTerminalInvoice(status)) return false;
-      return 2000;
+      const current = state.state.data?.status;
+      if (current && isTerminalInvoice(current)) return false;
+      return POLL_INTERVAL_MS;
     },
+  });
+  const payStart = usePayStart({
+    send: (method) => api.payPublicInvoice(invoiceId, method),
+    onAccepted: (result) => {
+      const existing = queryClient.getQueryData<PublicInvoice>(queryKey);
+      if (existing && isTerminalInvoice(existing.status)) return;
+      queryClient.setQueryData(queryKey, { ...existing, ...result });
+    },
+    onConflict: () => void queryClient.invalidateQueries({ queryKey }),
   });
   const status = poll.data?.status ?? created?.status ?? "creating";
   const amount = poll.data?.amountXof ?? created?.amountXof ?? 0;
   const expiresAt = poll.data?.expiresAt ?? created?.expiresAt ?? null;
   const demoPayment = Boolean(poll.data?.demoPayment ?? created?.demoPayment);
-  const payMethod = poll.data?.payMethod ?? chosen ?? created?.payMethod ?? null;
+  const payMethod = poll.data?.payMethod ?? payStart.method ?? created?.payMethod ?? null;
   const bolt11 = poll.data?.bolt11 ?? created?.bolt11 ?? null;
   const phase = publicPayPhase({ status, demoPayment, payMethod });
   const clock = expiresAt ? countdown(expiresAt, now) : null;
   const shopName = shop.data?.name ?? "";
   const receivedAt = useRef<string | null>(null);
   if (phase === "paid" && receivedAt.current === null) receivedAt.current = new Date().toISOString();
+  const pollFailing = poll.isError && now - (poll.dataUpdatedAt || mountedAt.current) > PERSISTENT_FAILURE_MS;
+  const missing = poll.error instanceof ApiError && poll.error.status === 404;
 
-  async function confirm() {
-    if (block || busy || !selected) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await api.payPublicInvoice(invoiceId, selected);
-      setChosen(result.payMethod ?? selected);
-      queryClient.setQueryData(["public-invoice", invoiceId], result);
-    } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "Le paiement n'a pas démarré. Réessayez.");
-    } finally {
-      setBusy(false);
-    }
+  function confirm() {
+    if (block || !selected) return;
+    payStart.start(selected);
   }
 
-  if (poll.isLoading && !created) {
+  if (!poll.data && !created) {
+    if (missing || pollFailing) {
+      return (
+        <PublicShell>
+          <Page title={shopName || "Paiement"}>
+            <ErrorState
+              message={missing ? "Cette facture est introuvable. Vérifiez le QR." : "La connexion est instable."}
+              onRetry={missing ? undefined : () => void poll.refetch()}
+            />
+          </Page>
+        </PublicShell>
+      );
+    }
     return (
       <PublicShell>
         <Page title={shopName || " "}>
@@ -262,13 +279,12 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
               <button
                 key={choice.method}
                 type="button"
+                aria-label={`${choice.label}, ${choice.hint}`}
                 disabled={Boolean(block)}
                 onClick={() => setSelected(choice.method)}
                 className="flex min-h-16 items-center gap-3 rounded-xl border border-black/10 bg-surface px-4 text-left shadow-[0_1px_2px_rgba(17,24,39,0.06)] active:bg-bg disabled:opacity-50"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-success-bg text-primary">
-                  {choice.method === "lightning" ? <Zap aria-hidden="true" size={20} /> : <Smartphone aria-hidden="true" size={20} />}
-                </span>
+                <PayLogo method={choice.method} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="font-semibold">{choice.label}</span>
                   <span className="text-sm text-muted">{choice.hint}</span>
@@ -293,15 +309,15 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
           action={
             <div className="grid gap-2">
               {block ? <p className="text-sm text-warning">{block}</p> : null}
-              {error ? (
+              {payStart.error ? (
                 <p role="alert" className="text-sm text-danger">
-                  {error}
+                  {payStart.error}
                 </p>
               ) : null}
-              <Button type="button" busy={busy} disabled={Boolean(block)} onClick={() => void confirm()}>
+              <Button type="button" disabled={Boolean(block)} onClick={confirm}>
                 Confirmer le paiement de {formatXof(amount)}
               </Button>
-              <Button type="button" variant="secondary" disabled={busy} onClick={() => setSelected(null)}>
+              <Button type="button" variant="secondary" onClick={() => setSelected(null)}>
                 Changer de moyen
               </Button>
             </div>
@@ -314,7 +330,10 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
             </div>
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <dt className="text-muted">Moyen</dt>
-              <dd className="font-medium">{payMethodLabel(selected)}</dd>
+              <dd className="flex items-center gap-2 font-medium">
+                <PayLogo method={selected} size={28} />
+                {payMethodLabel(selected)}
+              </dd>
             </div>
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <dt className="text-muted">Montant</dt>
@@ -334,6 +353,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
 
   const steps = payProgress({ status, payMethod });
   const current = steps.find((step) => step.state === "current");
+  const preparing = payMethod === "lightning" && demoPayment && bolt11 === null;
   const showWallet = bolt11 !== null && (payMethod === "lightning" || !demoPayment);
   return (
     <PublicShell>
@@ -341,13 +361,26 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
         <div className="jk-fade-in">
           <p className="text-sm text-muted">{shopName}</p>
           <p className="tabular mt-1 text-[32px] leading-10 font-bold">{formatXof(amount)}</p>
-          {payMethod ? <p className="mt-1 text-sm text-muted">{payMethodLabel(payMethod)}</p> : null}
+          {payMethod ? (
+            <p className="mt-2 flex items-center gap-2 text-sm text-muted">
+              <PayLogo method={payMethod} size={28} />
+              {payMethodLabel(payMethod)}
+            </p>
+          ) : null}
           <div className="mt-6">
             <PayStepper steps={steps} />
           </div>
           <p role="status" aria-live="polite" className="mt-4 min-h-6 text-center text-sm font-medium">
             {current ? `${current.label} en cours` : ""}
           </p>
+          {preparing ? (
+            <div className="mt-4 flex flex-col items-center" role="status">
+              <Skeleton className="size-[220px] rounded-2xl" />
+              <Skeleton className="mt-3 h-12 w-full max-w-sm" />
+              <Skeleton className="mt-2 h-12 w-full max-w-sm" />
+              <p className="mt-3 text-center text-xs text-subtle">Préparation de la facture Lightning…</p>
+            </div>
+          ) : null}
           {showWallet && bolt11 ? (
             <div className="mt-4">
               <LightningPanel
@@ -370,9 +403,16 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
               Démo sandbox : la confirmation se fait automatiquement, sans paiement réel.
             </p>
           )}
-          {poll.isError ? (
+          {payStart.failed ? (
             <p role="alert" className="mt-3 text-center text-sm text-danger">
-              {poll.error instanceof ApiError ? poll.error.message : "Vérification impossible."}{" "}
+              Le paiement n'a pas pu être envoyé.{" "}
+              <button type="button" className="min-h-12 underline" onClick={payStart.retry}>
+                Réessayer
+              </button>
+            </p>
+          ) : pollFailing ? (
+            <p role="alert" className="mt-3 text-center text-sm text-danger">
+              Connexion instable, la vérification continue.{" "}
               <button type="button" className="min-h-12 underline" onClick={() => void poll.refetch()}>
                 Réessayer
               </button>
