@@ -10,9 +10,10 @@ export default defineConfig({
     locale: "fr-FR",
   },
   webServer: {
-    command: "corepack pnpm dev --host 127.0.0.1 --port 4173 --strictPort",
+    // Direct vite binary — avoids corepack/pnpm PATH issues on Windows CI/dev machines.
+    command: "node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173 --strictPort",
     url: "http://127.0.0.1:4173",
-    reuseExistingServer: false,
-    timeout: 30_000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
   },
 });
