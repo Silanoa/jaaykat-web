@@ -186,6 +186,11 @@ describe("attestation publique", () => {
     expect(atteste).not.toHaveTextContent("paiements Lightning ont été enregistrés");
   });
 
+  it("ne présente pas comme réels des paiements dont l'environnement n'a pas pu être vérifié", async () => {
+    renderAt("/s/tok", publicHarness(attestation({ environment: "unknown" })));
+    expect(await screen.findByText(/Environnement Bitnob non vérifié à l'émission/)).toBeInTheDocument();
+  });
+
   it("signale une attestation expirée", async () => {
     renderAt("/s/tok", publicHarness(attestation({ status: "expired" })));
     expect(await screen.findByText("Attestation expirée le", { exact: false })).toBeInTheDocument();

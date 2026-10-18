@@ -11,12 +11,15 @@ import { pollRetryDelay, shouldRetry } from "../lib/resilience";
 import type { Attestation } from "../lib/schemas";
 
 function environmentNote(environment: string): string | null {
-  if (environment === "live") return null;
+  if (environment === "live" || environment === "production") return null;
   if (environment === "sandbox") {
     return "Réseau de test Bitnob (sandbox) : les paiements comptés ici sont des paiements de test, aucun argent réel n'a circulé.";
   }
   if (environment === "mock") {
     return "Simulation locale : les paiements comptés ici sont simulés, aucun argent réel n'a circulé.";
+  }
+  if (environment === "unknown") {
+    return "Environnement Bitnob non vérifié à l'émission : ne pas supposer que ces paiements sont réels.";
   }
   return `Environnement de test (${environment}) : aucun argent réel n'a circulé.`;
 }
