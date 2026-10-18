@@ -2,16 +2,15 @@
 
 Application web installable pour un petit commerce à Dakar : encaisser un montant en francs CFA, montrer un QR Lightning, suivre les ventes, le tableau de bord et le score de régularité. Le même site sert sur téléphone, installé en plein écran. Il n'y a pas d'application native ni de fiche de store.
 
-Le paiement du client passe par la page `/p/<slug>`. En sandbox, deux modes coexistent. Sans `payUrl`, la facture Lightning se règle toute seule en quelques secondes. Avec `demoPayment` et `payUrl`, le client scanne le QR, ouvre la page et choisit Portefeuille Lightning, Wave, Orange Money, Yas ou Expresso. Le débit est simulé : l'écran affiche « Démo : paiement simulé, aucune somme réelle », et « Paiement reçu » n'apparaît que lorsque l'API renvoie `paid`. Ce n'est pas un encaissement réel. Le mobile money réel sert seulement au retrait, via le backend.
+Le client paie depuis la page `/p/<slug>`. En mode démo (`demoPayment`), il choisit Portefeuille Lightning, Wave, Orange Money, Yas ou Expresso ; le débit est simulé et « Paiement reçu » n'apparaît que lorsque l'API renvoie `paid`. Le mobile money réel ne sert qu'au retrait.
 
 ## Ce qui est simulé
 
-- Les ventes d'historique marquées `source: seed` par l'API portent le badge « Historique simulé ». Elles ne sont pas retirables. L'écran Solde montre le « Solde retirable » (ledger renvoyé par `GET /api/balance`) et, à part, le « Chiffre d'affaires de démonstration » ; le tableau de bord et le score affichent « Données de démonstration » quand l'API le signale.
-- L'attestation n'est émise que pour un marchand éligible (14 jours, 20 ventes payées). Celle d'un compte avec historique simulé est étiquetée « Démonstration » et n'atteste rien de réel ; celle d'un marchand réel signale aussi le réseau de test tant que Bitnob répond en sandbox.
-- Le paiement de la démo est un règlement sandbox, pas un paiement réel. En mode manuel, le choix Lightning / Wave / Orange Money / Yas / Expresso ne débite aucun compte.
-- Il n'y a pas d'on-ramp Orange Money : un compte mobile money ne paie pas la facture. Hors démo, il faut un portefeuille Lightning. Le texte est sur « Comment payer ? ».
-- Le numéro de téléphone est un identifiant déclaré. Aucun SMS n'est envoyé. Un PIN oublié se réinitialise sur le serveur, pas dans l'application.
-- Le score est indicatif. Il n'est pas recalculé dans le navigateur.
+- Les ventes d'historique (`source: seed`) portent le badge « Historique simulé » et ne sont pas retirables. L'écran Solde sépare « Solde retirable » et « Chiffre d'affaires de démonstration ».
+- L'attestation exige 14 jours et 20 ventes payées. Avec un historique simulé, elle est étiquetée « Démo » et n'atteste rien de réel ; en sandbox, elle signale des paiements de test.
+- Aucun paiement de démo ne débite de compte. Hors démo, il faut un portefeuille Lightning : un compte mobile money ne paie pas la facture.
+- Le numéro de téléphone est un identifiant déclaré, sans SMS. Un PIN oublié se réinitialise côté serveur.
+- Le score est calculé par l'API, jamais dans le navigateur.
 
 ## Lancer
 
