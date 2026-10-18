@@ -102,6 +102,7 @@ async function mockApi(page: Page, options?: { manualDemo?: boolean }) {
     }
     if (path === "/api/dashboard") {
       return send(200, {
+        demo: false,
         kpis: {
           revenueXof: 12500,
           revenueDeltaPct: 0.2,
@@ -123,6 +124,10 @@ async function mockApi(page: Page, options?: { manualDemo?: boolean }) {
         score: 71,
         band: "B",
         eligible: true,
+        demo: false,
+        windowDays: 90,
+        thresholds: { days: 14, sales: 20 },
+        remaining: { days: 0, sales: 0 },
         computedAt: "2026-10-17T18:00:00.000Z",
         progress: null,
         components: [
@@ -136,7 +141,7 @@ async function mockApi(page: Page, options?: { manualDemo?: boolean }) {
       });
     }
     if (path === "/api/balance") {
-      return send(200, { balanceXof: 0, balanceSats: 0, lastPayouts: [] });
+      return send(200, { balanceXof: 0, balanceSats: 0, demoRevenueXof: 0, demoSalesCount: 0, lastPayouts: [] });
     }
     return send(404, { error: "NOT_FOUND", message: `Route absente du mock : ${method} ${path}` });
   });

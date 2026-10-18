@@ -85,6 +85,16 @@ export function formatWhen(iso: string): string {
   return `${parts.weekday} ${parts.day} ${month}, ${parts.hour}:${parts.minute}`;
 }
 
+export function formatDay(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return `${day} ${MONTHS_FR[(month ?? 1) - 1] ?? ""} ${year}`;
+}
+
+export function formatDate(iso: string): string {
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Dakar", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  return formatDay(date);
+}
+
 export function countdown(expiresAt: string, nowMs: number): {
   mmss: string;
   expired: boolean;

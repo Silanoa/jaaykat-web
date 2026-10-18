@@ -132,7 +132,7 @@ describe("les vraies erreurs restent visibles et ne sont pas rejouees", () => {
     const h = harness((path, _method, count) => {
       if (path !== "/api/balance") return undefined;
       if (count >= 2) return jsonResponse(500, { error: "INTERNAL", message: "Une erreur est survenue." });
-      return jsonResponse(200, { balanceXof: 5000, balanceSats: 8000, lastPayouts: [] });
+      return jsonResponse(200, { balanceXof: 5000, balanceSats: 8000, demoRevenueXof: 0, demoSalesCount: 0, lastPayouts: [] });
     });
     renderAt("/app/balance", h.fetchImpl, true);
     await waitFor(() => expect(document.body.textContent).toMatch(/5\s?000/));

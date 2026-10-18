@@ -107,6 +107,7 @@ export async function mockApi(page: Page): Promise<{ pub: PublicInvoiceMock }> {
     if (path === "/api/public/shops/awa-beaute") return send(200, { name: "Awa Beauté", category: "beaute" });
     if (path === "/api/dashboard") {
       return send(200, {
+        demo: false,
         kpis: {
           revenueXof: 12500,
           revenueDeltaPct: 0.2,
@@ -156,6 +157,10 @@ export async function mockApi(page: Page): Promise<{ pub: PublicInvoiceMock }> {
         score: 71,
         band: "B",
         eligible: true,
+        demo: false,
+        windowDays: 90,
+        thresholds: { days: 14, sales: 20 },
+        remaining: { days: 0, sales: 0 },
         computedAt: "2026-10-17T18:00:00.000Z",
         progress: null,
         components: [
@@ -168,7 +173,7 @@ export async function mockApi(page: Page): Promise<{ pub: PublicInvoiceMock }> {
         actions: [{ text: "Encaissez au moins une vente par jour", points: 6 }],
       });
     }
-    if (path === "/api/balance") return send(200, { balanceXof: 12500, balanceSats: 21000, lastPayouts: [] });
+    if (path === "/api/balance") return send(200, { balanceXof: 12500, balanceSats: 21000, demoRevenueXof: 0, demoSalesCount: 0, lastPayouts: [] });
     return send(404, { error: "NOT_FOUND", message: `Route absente du mock : ${method} ${path}` });
   });
   return { pub };

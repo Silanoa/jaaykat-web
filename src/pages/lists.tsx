@@ -1,17 +1,20 @@
 import { UpdatedAgo } from "../components/updated-ago";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { CopyButton } from "../components/copy-button";
 import { Heatmap } from "../components/heatmap";
+import { QrImage } from "../components/qr-image";
 import { ScoreGauge } from "../components/score-gauge";
 import { ShopHeader } from "../components/shell";
 import { Button, EmptyState, ErrorState, Page, Skeleton } from "../components/ui";
 import { useDesktop } from "../hooks/useDesktop";
 import { useOnline } from "../hooks/useOnline";
+import { useShareAttestation } from "../hooks/useShareAttestation";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
 import { formatSats, formatWhen, formatXof } from "../lib/format";
-import { channelLabel, formatDelta, formatPercent, invoiceBadge, shortProof } from "../lib/labels";
+import { channelLabel, eligibilityText, formatDelta, formatPercent, invoiceBadge, shortProof } from "../lib/labels";
 import { screenState } from "../lib/offline";
 import { rangeBounds, type RangeKey } from "../lib/ranges";
 import type { SaleItem } from "../lib/schemas";
@@ -208,6 +211,7 @@ export function DashboardPage() {
   const desktop = useDesktop();
   const navigate = useNavigate();
   const [range, setRange] = useState<RangeKey>("today");
+  const attest = useShareAttestation();
   const bounds = rangeBounds(range);
   const query = useQuery({
     queryKey: ["dashboard", range],
@@ -268,6 +272,11 @@ export function DashboardPage() {
       {state === "error" ? <ErrorState message={messageOf(query.error)} onRetry={() => void query.refetch()} /> : null}
       {state === "ready" && data ? (
         <div className="jk-fade-in flex flex-col gap-4">
+          {data.demo ? (
+            <p className="rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
+              Données de démonstration : l'historique simulé est inclus dans ces chiffres. Il n'est pas retirable.
+            </p>
+          ) : null}
           {data.kpis.salesCount < 5 ? (
             <p className="rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
               Encore peu de ventes pour lire une tendance.
@@ -275,7 +284,7 @@ export function DashboardPage() {
           ) : null}
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-3">
             <article className="rounded-xl bg-surface p-4 shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
-              <p className="text-sm text-muted">Chiffre d'affaires</p>
+              <p className="text-sm text-muted">{data.demo ? "Chiffre d'affaires de démonstration" : "Chiffre d'affaires"}</p>
               <p className="tabular text-[32px] leading-10 font-bold">{formatXof(data.kpis.revenueXof)}</p>
               <p className="text-sm">{formatDelta(data.kpis.revenueDeltaPct) ?? "Pas de comparaison"}</p>
             </article>
@@ -343,19 +352,31 @@ export function DashboardPage() {
                   <article className="rounded-xl bg-success-bg p-4">
                     <h3 className="font-semibold">Attestation</h3>
                     <p className="mt-1 text-sm">Le lien reprend le score renvoyé par le serveur.</p>
+                    {!score.data.eligible ? (
+                      <p id="dash-attest-why" className="mt-2 text-sm text-warning">
+                        {eligibilityText(score.data.remaining)}
+                      </p>
+                    ) : null}
+                    {attest.error ? (
+                      <p role="alert" className="mt-2 text-sm text-danger">
+                        {attest.error}
+                      </p>
+                    ) : null}
                     <Button
                       type="button"
                       className="mt-3"
+                      busy={attest.busy}
                       disabled={!online || !score.data.eligible}
-                      onClick={() => {
-                        void api.shareScore().then(async (result) => {
-                          await navigator.clipboard.writeText(result.url);
-                          useToast.getState().show("Lien d'attestation copié");
-                        });
-                      }}
+                      aria-describedby={score.data.eligible ? undefined : "dash-attest-why"}
+                      onClick={() => void attest.share()}
                     >
                       Partager mon attestation
                     </Button>
+                    {attest.url ? (
+                      <Link to="/app/score" className="mt-2 inline-flex min-h-12 items-center font-semibold text-primary">
+                        Voir l'attestation émise
+                      </Link>
+                    ) : null}
                   </article>
                 </div>
               ) : null}
@@ -380,6 +401,11 @@ export function ScorePage() {
   const api = useApi();
   const online = useOnline();
   const [open, setOpen] = useState<keyof typeof COMPONENT_COPY | null>(null);
+  const attest = useShareAttestation();
+  const issued = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (attest.url || attest.error) issued.current?.scrollIntoView?.({ block: "nearest" });
+  }, [attest.url, attest.error]);
   const query = useQuery({
     queryKey: ["score"],
     queryFn: async () => {
@@ -398,20 +424,27 @@ export function ScorePage() {
   const data = query.data;
   const detail = useMemo(() => (open ? COMPONENT_COPY[open] : null), [open]);
 
-  async function share() {
-    const result = await api.shareScore();
-    await navigator.clipboard.writeText(result.url);
-    useToast.getState().show("Lien d'attestation copié");
-  }
-
   return (
     <Page
       title="Score"
       actionClassName="lg:hidden"
       action={
-        <Button type="button" onClick={() => void share()} disabled={!online || !data?.eligible}>
-          Partager mon attestation
-        </Button>
+        <div>
+          {data && !data.eligible ? (
+            <p id="attest-why-mobile" className="mb-2 text-sm text-warning">
+              {eligibilityText(data.remaining)}
+            </p>
+          ) : null}
+          <Button
+            type="button"
+            busy={attest.busy}
+            disabled={!online || !data?.eligible}
+            aria-describedby={data && !data.eligible ? "attest-why-mobile" : undefined}
+            onClick={() => void attest.share()}
+          >
+            Partager mon attestation
+          </Button>
+        </div>
       }
     >
       <ShopHeader />
@@ -422,6 +455,11 @@ export function ScorePage() {
       {state === "ready" && data ? (
         <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
           <div>
+          {data.demo ? (
+            <p className="mb-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
+              Données de démonstration : ce score inclut un historique de ventes simulé. Il ne reflète pas une activité réelle.
+            </p>
+          ) : null}
           {!data.eligible ? (
             <p className="mb-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
               Score en construction
@@ -435,12 +473,50 @@ export function ScorePage() {
           <article className="mt-4 hidden rounded-xl bg-surface p-4 lg:block">
             <h2 className="font-semibold">Attestation</h2>
             <p className="mt-1 text-sm text-muted">Lien en lecture seule. Le score affiché est celui du serveur.</p>
+            {!data.eligible ? (
+              <p id="attest-why-desktop" className="mt-2 text-sm text-warning">
+                {eligibilityText(data.remaining)}
+              </p>
+            ) : null}
             <div className="mt-3">
-              <Button type="button" onClick={() => void share()} disabled={!online || !data.eligible}>
+              <Button
+                type="button"
+                busy={attest.busy}
+                disabled={!online || !data.eligible}
+                aria-describedby={data.eligible ? undefined : "attest-why-desktop"}
+                onClick={() => void attest.share()}
+              >
                 Partager mon attestation
               </Button>
             </div>
           </article>
+          {attest.error ? (
+            <p role="alert" ref={(node) => { issued.current = node; }} className="mt-3 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+              {attest.error}
+            </p>
+          ) : null}
+          {attest.url ? (
+            <section
+              aria-label="Attestation émise"
+              ref={(node) => { issued.current = node; }}
+              className="mt-4 rounded-xl bg-success-bg p-4"
+            >
+              <h2 className="font-semibold">Attestation émise</h2>
+              <p className="mt-1 text-sm">
+                Lien de vérification public, valable 7 jours. Il n'expose ni votre numéro ni vos clients.
+              </p>
+              <QrImage value={attest.url} label="QR code du lien de vérification" className="mx-auto mt-3 aspect-square w-full max-w-[200px]" />
+              <p className="mt-3 break-all text-sm">{attest.url}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <CopyButton value={attest.url} label="Copier le lien">
+                  Copier le lien
+                </CopyButton>
+                <Link to={new URL(attest.url, window.location.origin).pathname} className="inline-flex min-h-12 items-center px-3 text-sm font-semibold text-primary">
+                  Ouvrir l'attestation
+                </Link>
+              </div>
+            </section>
+          ) : null}
           </div>
           <div>
           <ul className="mt-4 flex flex-col gap-3 lg:mt-0">
@@ -473,6 +549,21 @@ export function ScorePage() {
               </ul>
             </section>
           ) : null}
+          <section aria-label="Règles du score" className="mt-6 rounded-xl bg-surface p-4">
+            <h2 className="font-semibold">Règles du score</h2>
+            <ul className="mt-2 list-disc pl-5 text-sm text-muted">
+              <li>
+                Calculé sur les ventes payées uniquement, confirmées par Bitnob, sur les {data.windowDays} derniers jours. Les factures
+                expirées pèsent seulement sur la qualité d'encaissement.
+              </li>
+              <li>
+                Éligibilité : {data.thresholds.days} jours depuis la première vente payée et {data.thresholds.sales} ventes payées.
+                Avant, il n'y a ni score ni attestation.
+              </li>
+              <li>Score de 0 à 100. Bande A à partir de 75, B de 60 à 74, C de 45 à 59, D en dessous de 45.</li>
+              <li>Indicatif : ce n'est ni une note de solvabilité ni une garantie de crédit.</li>
+            </ul>
+          </section>
           </div>
         </div>
       ) : null}

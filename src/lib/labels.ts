@@ -35,6 +35,17 @@ export function networkLabel(network: PayoutNetwork): string {
   }
 }
 
+export function networkLogoMethod(network: PayoutNetwork): PayMethod {
+  return network === "free" ? "yas" : network;
+}
+
+export function eligibilityText(remaining: { days: number; sales: number }): string {
+  const parts: string[] = [];
+  if (remaining.sales > 0) parts.push(`${remaining.sales} vente${remaining.sales > 1 ? "s" : ""} payée${remaining.sales > 1 ? "s" : ""}`);
+  if (remaining.days > 0) parts.push(`${remaining.days} jour${remaining.days > 1 ? "s" : ""}`);
+  return `Attestation indisponible. Encore ${parts.join(" et ")} pour être éligible.`;
+}
+
 export function payMethodLabel(method: PayMethod): string {
   if (method === "lightning") return "Portefeuille Lightning";
   return method === "yas" ? "Yas" : networkLabel(method);

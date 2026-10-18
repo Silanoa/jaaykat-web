@@ -106,6 +106,7 @@ export const salesSchema = z.object({
 export type Sales = z.infer<typeof salesSchema>;
 
 export const dashboardSchema = z.object({
+  demo: z.boolean(),
   kpis: z.object({
     revenueXof: z.number(),
     revenueDeltaPct: z.number().nullable(),
@@ -144,6 +145,10 @@ export const scoreSchema = z.object({
   score: z.number().nullable(),
   band: z.enum(["A", "B", "C", "D"]).nullable(),
   eligible: z.boolean(),
+  demo: z.boolean(),
+  windowDays: z.number(),
+  thresholds: z.object({ days: z.number(), sales: z.number() }),
+  remaining: z.object({ days: z.number(), sales: z.number() }),
   computedAt: z.string().nullable(),
   components: z.array(
     z.object({
@@ -187,6 +192,8 @@ export type Payout = z.infer<typeof payoutSchema>;
 export const balanceSchema = z.object({
   balanceXof: z.number(),
   balanceSats: z.number(),
+  demoRevenueXof: z.number(),
+  demoSalesCount: z.number(),
   lastPayouts: z.array(
     z.object({
       id: z.string(),
@@ -229,14 +236,19 @@ export type SystemInfo = z.infer<typeof systemSchema>;
 export const shareLinkSchema = z.object({ url: z.string() });
 
 export const attestationSchema = z.object({
+  attestationId: z.string(),
   shopName: z.string(),
+  status: z.enum(["valid", "expired", "revoked"]),
+  issuedAt: z.string(),
+  expiresAt: z.string(),
+  demo: z.boolean(),
+  environment: z.string(),
+  windowDays: z.number(),
   score: z.number().nullable(),
   band: z.enum(["A", "B", "C", "D"]).nullable(),
-  period: z.string(),
-  salesCount: z.number(),
-  computedAt: z.string(),
-  expiresAt: z.string(),
-  status: z.enum(["valid", "expired", "revoked"]),
+  period: z.object({ from: z.string(), to: z.string() }).nullable(),
+  salesCount: z.number().nullable(),
+  totalXof: z.number().nullable(),
 });
 export type Attestation = z.infer<typeof attestationSchema>;
 
