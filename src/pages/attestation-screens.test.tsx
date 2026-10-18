@@ -181,6 +181,9 @@ describe("attestation publique", () => {
     expect(await screen.findByText(/Démonstration/)).toBeInTheDocument();
     expect(screen.getByText(/historique de ventes simulé/)).toBeInTheDocument();
     expect(screen.getByText(/Réseau de test Bitnob \(sandbox\)/)).toBeInTheDocument();
+    const atteste = screen.getByRole("region", { name: "Ce que cette attestation atteste" });
+    expect(atteste).toHaveTextContent("Rien de réel");
+    expect(atteste).not.toHaveTextContent("paiements Lightning ont été enregistrés");
   });
 
   it("signale une attestation expirée", async () => {

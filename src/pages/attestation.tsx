@@ -66,10 +66,14 @@ function Details({ data }: { data: Attestation }) {
       <section aria-label="Ce que cette attestation atteste" className="mt-4">
         <h2 className="font-semibold">Ce que cette attestation atteste</h2>
         <ul className="mt-2 list-disc pl-5 text-sm">
-          <li>
-            Que {count} paiement{count > 1 ? "s" : ""} Lightning {count > 1 ? "ont" : "a"} été enregistré{count > 1 ? "s" : ""} comme payé
-            {count > 1 ? "s" : ""} par Jaaykat, après confirmation de Bitnob, sur ce compte de boutique.
-          </li>
+          {data.demo ? (
+            <li>Rien de réel : les ventes comptées viennent d'un historique simulé, pas de paiements Lightning.</li>
+          ) : (
+            <li>
+              Que {count} paiement{count > 1 ? "s" : ""} Lightning {count > 1 ? "ont" : "a"} été enregistré{count > 1 ? "s" : ""} comme
+              payé{count > 1 ? "s" : ""} par Jaaykat, après confirmation de Bitnob, sur ce compte de boutique.
+            </li>
+          )}
           <li>Que le score a été calculé à la date d'émission avec les règles ci-dessous.</li>
         </ul>
       </section>
