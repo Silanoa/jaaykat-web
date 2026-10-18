@@ -14,7 +14,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icons/*.png"],
+      includeAssets: ["icons/*.png", "payment-logos/*"],
       manifest: {
         name: "Jaaykat",
         short_name: "Jaaykat",
