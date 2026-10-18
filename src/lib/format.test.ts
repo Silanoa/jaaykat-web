@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { countdown, formatClock, formatSats, formatWhen, formatXof } from "./format";
+import { chargeCtaLabel } from "./labels";
+
+describe("chargeCtaLabel", () => {
+  it("montre le montant dans le CTA dès qu'il est saisi", () => {
+    expect(chargeCtaLabel(0)).toBe("Encaisser");
+    expect(chargeCtaLabel(2500)).toBe("Encaisser 2\u202F500\u00A0F");
+  });
+});
 
 describe("formatXof", () => {
   it("affiche les francs avec un espace insécable", () => {

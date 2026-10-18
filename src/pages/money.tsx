@@ -5,7 +5,7 @@ import { AmountPad, AmountReadout } from "../components/pads";
 import { NetworkPicker } from "../components/network-picker";
 import { PayLogo } from "../components/pay-logo";
 import { BackButton, ShopHeader } from "../components/shell";
-import { Button, ErrorState, Field, Page, Skeleton } from "../components/ui";
+import { Banner, Button, ErrorState, Field, Page, PageHeader, PhoneField, Skeleton, TextInput, inputClass } from "../components/ui";
 import { useNow } from "../hooks/useNow";
 import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
@@ -21,8 +21,6 @@ import { normalizePhone, payoutAmountError } from "../lib/validation";
 import { useSession } from "../stores/session";
 import { useToast } from "../stores/toast";
 
-const inputClass = "min-h-12 w-full rounded-lg border border-black/15 bg-surface px-3";
-
 function isTerminalPayout(status: string): boolean {
   return status === "completed" || status === "failed" || status === "expired";
 }
@@ -34,11 +32,10 @@ export function BalancePage() {
   const now = useNow();
   return (
     <Page
-      title="Solde"
       action={
         <Link
           to="/app/payout"
-          className={`inline-flex min-h-14 w-full items-center justify-center rounded-xl font-semibold ${online ? "bg-primary text-white" : "bg-primary/40 text-white"}`}
+          className={`inline-flex min-h-14 w-full items-center justify-center rounded-xl font-semibold ${online ? "bg-navy text-white" : "bg-navy/40 text-white"}`}
           aria-disabled={!online}
           onClick={(event) => {
             if (!online) event.preventDefault();
@@ -49,6 +46,7 @@ export function BalancePage() {
       }
     >
       <ShopHeader />
+      <PageHeader title="Solde" subtitle="Montant retirable vers mobile money." />
       {!online ? <p className="mb-3 text-sm text-warning">{postBlockReason("payout", false)}</p> : null}
       {query.isLoading ? <Skeleton className="h-24" /> : null}
       {query.isError && query.data && now - query.dataUpdatedAt > PERSISTENT_FAILURE_MS ? (
@@ -158,43 +156,59 @@ export function PayoutFormPage() {
       }
     >
       <BackButton to="/app/balance" />
-      <h1 className="mb-2 text-[28px] font-bold">Retrait</h1>
-      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
-      <div>
-      <p className="mb-1 text-sm">
-        Solde retirable :{" "}
-        <strong className="tabular">{balance.data ? formatXof(balance.data.balanceXof) : "…"}</strong>
-      </p>
-      <p className="mb-2 text-sm text-muted">Entre 100 et 200 000 F.</p>
-      <AmountReadout value={amount} />
-      {amountError ? <p className="text-center text-sm text-danger">{amountError}</p> : null}
-      <div className="my-3">
-        <AmountPad value={amount} onChange={setAmount} />
-      </div>
-      <NetworkPicker value={network} onChange={setNetwork} />
-      <Field id="payout-phone" label="Numéro" hint="9 chiffres commençant par 7">
-        <div className="flex gap-2">
-          <span className="inline-flex min-h-12 items-center rounded-lg bg-surface px-3">+221</span>
-          <input id="payout-phone" className={inputClass} inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} />
+      <PageHeader title="Retrait" subtitle="Entre 100 et 200 000 F." />
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start lg:gap-10">
+        <div>
+          <p className="mb-1 text-sm">
+            Solde retirable :{" "}
+            <strong className="tabular">{balance.data ? formatXof(balance.data.balanceXof) : "…"}</strong>
+          </p>
+          <AmountReadout value={amount} />
+          {amountError ? <p className="text-center text-sm text-danger">{amountError}</p> : null}
+          <div className="my-3">
+            <AmountPad value={amount} onChange={setAmount} />
+          </div>
+          <NetworkPicker value={network} onChange={setNetwork} />
+          <PhoneField
+            id="payout-phone"
+            label="Numéro"
+            hint="9 chiffres commençant par 7"
+            value={phone}
+            onChange={setPhone}
+          />
+          <div className="mt-3">
+            <Field id="payout-name" label="Nom du titulaire">
+              <TextInput id="payout-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Prénom Nom" />
+            </Field>
+          </div>
         </div>
-      </Field>
-      <div className="mt-3">
-        <Field id="payout-name" label="Nom du titulaire">
-          <input id="payout-name" className={inputClass} value={name} onChange={(event) => setName(event.target.value)} />
-        </Field>
-      </div>
-      </div>
-      <aside className="mt-6 hidden rounded-2xl bg-surface p-6 lg:block">
-        <h2 className="text-lg font-semibold">Récapitulatif</h2>
-        <p className="mt-3 text-sm text-muted">Montant</p>
-        <p className="tabular text-2xl font-bold">{formatXof(amount)}</p>
-        <p className="mt-3 flex items-center gap-2 text-sm">
-          <PayLogo method={networkLogoMethod(network)} size={28} />
-          {networkLabel(network)}
-        </p>
-        <p className="text-sm">{phoneOk ?? "Numéro à saisir"}</p>
-        <p className="text-sm">{name.trim() || "Titulaire à saisir"}</p>
-      </aside>
+        <aside className="mt-6 hidden rounded-2xl border border-black/8 bg-surface p-6 lg:block">
+          <h2 className="text-lg font-semibold">Récapitulatif</h2>
+          <dl className="mt-4 divide-y divide-black/8 text-sm">
+            <div className="flex justify-between gap-3 py-2">
+              <dt className="text-muted">Montant</dt>
+              <dd className="tabular font-semibold">{formatXof(amount)}</dd>
+            </div>
+            <div className="flex justify-between gap-3 py-2">
+              <dt className="text-muted">Num</dt>
+              <dd className="font-medium">{phoneOk ?? "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-3 py-2">
+              <dt className="text-muted">Titulaire</dt>
+              <dd className="font-medium">{name.trim() || "—"}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3 py-2">
+              <dt className="text-muted">Réseau</dt>
+              <dd className="flex items-center gap-2 font-medium">
+                <PayLogo method={networkLogoMethod(network)} size={28} />
+                {networkLabel(network)}
+              </dd>
+            </div>
+          </dl>
+          <div className="mt-4">
+            <Banner tone="info">Le montant reçu et les frais viennent du devis, pas d&apos;un calcul de l&apos;appli.</Banner>
+          </div>
+        </aside>
       </div>
     </Page>
   );
@@ -251,8 +265,7 @@ export function PayoutConfirmPage() {
         </div>
       }
     >
-      <p className="text-sm text-info">Mode démo</p>
-      <div className="mt-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
         <div>
           <p className="text-sm text-muted">Montant envoyé</p>
           <p className="tabular text-2xl font-bold">{formatXof(quote.amountXof)}</p>
@@ -307,7 +320,6 @@ export function PayoutStatusPage() {
         </Button>
       }
     >
-      <p className="text-sm text-muted">Mode démo</p>
       {query.isLoading ? <Skeleton className="mt-4 h-24" /> : null}
       {query.isError && query.data && now - query.dataUpdatedAt > PERSISTENT_FAILURE_MS ? (
         <p role="alert" className="mb-2 text-sm text-warning">
@@ -368,13 +380,13 @@ export function SettingsPage() {
   }
 
   return (
-    <Page title="Compte">
+    <Page>
       <ShopHeader />
+      <PageHeader title="Compte" subtitle="Préférences de la boutique sur cet appareil." />
       <p className="font-semibold">{merchant?.displayName}</p>
       <p className="text-sm text-muted">{merchant?.category}</p>
       <p className="mt-2 text-sm">Numéro {user?.phoneMasked ?? "—"}</p>
       <p className="mt-4 text-sm">Langue : français. Wolof : bientôt.</p>
-      <p className="mt-2 text-sm">Mode démo</p>
       <h2 className="mt-6 font-semibold">Montants rapides</h2>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {amounts.map((value, index) => (
@@ -403,11 +415,8 @@ export function SettingsPage() {
           Installer l'application
         </Link>
         <Link to="/app/system" className="inline-flex min-h-12 items-center">
-          Journal API (jury)
+          Journal API
         </Link>
-        <a className="inline-flex min-h-12 items-center" href="https://github.com/Silanoa/jaaykat-web">
-          Code source
-        </a>
         <p className="py-2 text-sm text-muted">Licence MIT. Jaaykat, Code & Chain Dakar 2026.</p>
       </div>
       <Button type="button" variant="danger" onClick={() => setConfirm(true)}>
@@ -436,8 +445,9 @@ export function SystemPage() {
   const api = useApi();
   const query = useQuery({ queryKey: ["system"], queryFn: () => api.system() });
   return (
-    <Page title="Journal API">
+    <Page>
       <BackButton to="/app/settings" />
+      <PageHeader title="Journal API" subtitle="Appels récents pour le jury et le diagnostic." />
       {query.isLoading ? <Skeleton className="h-24" /> : null}
       {query.isError && !query.data ? (
         <ErrorState message={query.error instanceof ApiError ? query.error.message : "Journal indisponible."} onRetry={() => void query.refetch()} />

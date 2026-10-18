@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button, Field, Page } from "../components/ui";
+import { BrandMark } from "../components/brand-mark";
+import { Button, Field, Page, PhoneField, TextInput, inputClass } from "../components/ui";
 import { PinPad } from "../components/pads";
 import { AuthShell } from "../components/shell";
 import { useOnline } from "../hooks/useOnline";
@@ -12,8 +13,18 @@ import { CATEGORIES, pinConfirmError, validateShop, type ShopDraft } from "../li
 import { useSession } from "../stores/session";
 import { useToast } from "../stores/toast";
 
-const inputClass =
-  "min-h-12 w-full rounded-lg border border-black/15 bg-surface px-3 outline-none focus:border-primary";
+function AuthBrandHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="mb-6">
+      <div className="mb-5 flex items-center gap-2.5 lg:hidden">
+        <BrandMark size={36} />
+        <p className="text-lg font-bold tracking-tight text-primary">JaayKat</p>
+      </div>
+      <h1 className="font-display text-[28px] leading-[34px] font-semibold">{title}</h1>
+      <p className="mt-1 text-sm text-muted">{subtitle}</p>
+    </div>
+  );
+}
 
 export function InstallPage() {
   const navigate = useNavigate();
@@ -23,7 +34,6 @@ export function InstallPage() {
   return (
     <AuthShell>
       <Page
-        title="Installer Jaaykat"
         action={
           <div className="flex flex-col gap-2">
             {ready ? (
@@ -52,6 +62,7 @@ export function InstallPage() {
           </div>
         }
       >
+        <AuthBrandHeader title="Installer Jaaykat" subtitle="Ajoutez l'app sur votre écran d'accueil." />
         <p>Installez Jaaykat sur votre téléphone.</p>
         {isIos() ? (
           <p className="mt-4 rounded-xl bg-surface p-4 text-sm">
@@ -172,7 +183,6 @@ export function RegisterPage() {
     return (
       <AuthShell>
         <Page
-          title="Créer ma boutique"
           action={
             <div>
               {block ? <p className="mb-2 text-sm text-warning">{block}</p> : null}
@@ -182,12 +192,12 @@ export function RegisterPage() {
             </div>
           }
         >
+          <AuthBrandHeader title="Créer ma boutique" subtitle="Bienvenue sur JaayKat, créons votre compte." />
           <p className="mb-4 text-sm text-muted">Étape 1 sur 2.</p>
           <div className="flex flex-col gap-4">
             <Field id="shopName" label="Nom de la boutique" error={fields.shopName}>
-              <input
+              <TextInput
                 id="shopName"
-                className={inputClass}
                 value={draft.shopName}
                 aria-invalid={Boolean(fields.shopName)}
                 onChange={(event) => setDraft({ ...draft, shopName: event.target.value })}
@@ -209,48 +219,35 @@ export function RegisterPage() {
               </select>
             </Field>
             <Field id="firstName" label="Prénom" hint="Utilisé pour vos retraits" error={fields.firstName}>
-              <input
+              <TextInput
                 id="firstName"
-                className={inputClass}
                 value={draft.firstName}
                 onChange={(event) => setDraft({ ...draft, firstName: event.target.value })}
               />
             </Field>
             <Field id="lastName" label="Nom" error={fields.lastName}>
-              <input
+              <TextInput
                 id="lastName"
-                className={inputClass}
                 value={draft.lastName}
                 onChange={(event) => setDraft({ ...draft, lastName: event.target.value })}
               />
             </Field>
-            <Field
+            <PhoneField
               id="phone"
-              label="Téléphone"
               hint="Votre numéro sert d'identifiant."
               error={fields.phone}
-            >
-              <div className="flex gap-2">
-                <span className="inline-flex min-h-12 items-center rounded-lg bg-surface px-3">+221</span>
-                <input
-                  id="phone"
-                  className={inputClass}
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  placeholder="77 123 45 67"
-                  value={draft.phone}
-                  onChange={(event) => setDraft({ ...draft, phone: event.target.value })}
-                />
-              </div>
-            </Field>
+              value={draft.phone}
+              onChange={(value) => setDraft({ ...draft, phone: value })}
+            />
             <label className="flex min-h-12 items-center gap-3 text-sm">
               <input
                 type="checkbox"
                 checked={draft.acceptTerms}
                 onChange={(event) => setDraft({ ...draft, acceptTerms: event.target.checked })}
               />
-              J'accepte les conditions de la démo
+              J&apos;accepte les conditions de la démo
             </label>
+            <p className="text-xs text-muted">Ce code PIN ne peut pas être récupéré.</p>
             {fields.acceptTerms ? <p className="text-sm text-danger">{fields.acceptTerms}</p> : null}
           </div>
           <Link to="/app/login" className="mt-6 inline-flex min-h-12 items-center text-primary">
@@ -261,26 +258,43 @@ export function RegisterPage() {
     );
   }
 
+  if (phase === "submit") {
+    return (
+      <AuthShell>
+        <Page>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+            <BrandMark size={56} />
+            <p className="mt-6 text-lg font-semibold">Nous créons votre boutique…</p>
+            <p className="mt-2 text-sm text-muted">Sécurité, simplement.</p>
+            <div className="mt-8 h-2 w-full max-w-xs overflow-hidden rounded-full bg-black/10">
+              <div className="jk-progress-bar h-full rounded-full bg-primary" />
+            </div>
+            <p className="mt-6 text-xs text-subtle">Génération des clés · Catégories · Score</p>
+          </div>
+        </Page>
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell>
-      <Page title="Code PIN">
-        <p className="mb-4 text-sm">
-          Ce code protège vos ventes et vos retraits. Notez-le, il ne peut pas être récupéré.
-        </p>
-        <p className="mb-2 text-sm font-medium">
-          {phase === "submit"
-            ? "Création de votre boutique…"
-            : phase === "confirm"
-              ? "Confirmez le code"
-              : "Choisissez 6 chiffres"}
-        </p>
+      <Page>
+        <AuthBrandHeader
+          title="Code PIN"
+          subtitle={
+            phase === "confirm"
+              ? "Confirmez votre code à 6 chiffres."
+              : "Ce code protège vos ventes et vos retraits. Notez-le, il ne peut pas être récupéré."
+          }
+        />
+        <p className="mb-2 text-sm font-medium">{phase === "confirm" ? "Confirmez le code" : "Choisissez 6 chiffres"}</p>
         {error ? (
           <p role="alert" className="mb-3 text-sm text-danger">
             {error}
           </p>
         ) : null}
         {block ? <p className="mb-3 text-sm text-warning">{block}</p> : null}
-        <PinPad value={phase === "confirm" ? confirm : pin} onChange={onPin} disabled={phase === "submit" || Boolean(block)} shake={shake} />
+        <PinPad value={phase === "confirm" ? confirm : pin} onChange={onPin} disabled={Boolean(block)} shake={shake} />
       </Page>
     </AuthShell>
   );
@@ -326,7 +340,6 @@ export function LoginPage() {
   return (
     <AuthShell>
       <Page
-        title="Se connecter"
         action={
           <div>
             {block ? <p className="mb-2 text-sm text-warning">{block}</p> : null}
@@ -336,6 +349,7 @@ export function LoginPage() {
           </div>
         }
       >
+        <AuthBrandHeader title="Se connecter" subtitle="Entrez vos identifiants pour accéder à votre boutique." />
         {expired ? (
           <p role="status" className="mb-4 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
             Votre session a expiré, reconnectez-vous.
@@ -346,27 +360,16 @@ export function LoginPage() {
             {error}
           </p>
         ) : null}
-        <Field id="login-phone" label="Téléphone">
-          <div className="flex gap-2">
-            <span className="inline-flex min-h-12 items-center rounded-lg bg-surface px-3">+221</span>
-            <input
-              id="login-phone"
-              className={inputClass}
-              inputMode="tel"
-              autoComplete="username"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-            />
-          </div>
-        </Field>
+        <PhoneField id="login-phone" value={phone} onChange={setPhone} />
         <div className="mt-4">
+          <p className="mb-2 text-sm font-medium">Code PIN</p>
           <PinPad value={pin} onChange={setPin} disabled={locked || busy} />
         </div>
         <div className="mt-4 flex flex-col">
           <Link to="/app/forgot" className="inline-flex min-h-12 items-center text-primary">
             PIN oublié ?
           </Link>
-          <Link to="/app/register" className="inline-flex min-h-12 items-center text-primary">
+          <Link to="/app/register" className="inline-flex min-h-12 items-center font-medium text-primary">
             Créer ma boutique
           </Link>
         </div>
@@ -379,16 +382,14 @@ export function ForgotPage() {
   return (
     <AuthShell>
       <Page
-        title="PIN oublié"
         action={
-          <Link to="/app/login" className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-primary font-semibold text-white">
+          <Link to="/app/login" className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-navy font-semibold text-white">
             Retour à la connexion
           </Link>
         }
       >
-        <p>
-          Le code ne peut pas être récupéré à distance. Pendant la démo, l'équipe le réinitialise sur place.
-        </p>
+        <AuthBrandHeader title="PIN oublié" subtitle="Le code ne peut pas être récupéré à distance." />
+        <p>Pendant la démo, l&apos;équipe le réinitialise sur place.</p>
       </Page>
     </AuthShell>
   );

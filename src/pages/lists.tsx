@@ -7,7 +7,7 @@ import { Heatmap } from "../components/heatmap";
 import { QrImage } from "../components/qr-image";
 import { ScoreGauge } from "../components/score-gauge";
 import { ShopHeader } from "../components/shell";
-import { Button, EmptyState, ErrorState, Page, Skeleton } from "../components/ui";
+import { Button, EmptyState, ErrorState, Page, PageHeader, SegmentedControl, Skeleton } from "../components/ui";
 import { useDesktop } from "../hooks/useDesktop";
 import { useOnline } from "../hooks/useOnline";
 import { useShareAttestation } from "../hooks/useShareAttestation";
@@ -64,20 +64,20 @@ export function SalesPage() {
   const total = items.filter((item) => item.status === "paid").reduce((sum, item) => sum + item.amountXof, 0);
 
   return (
-    <Page title="Ventes">
+    <Page>
       <ShopHeader />
-      <div className="mb-1 grid grid-cols-3 gap-2">
-        {(["today", "7d", "30d"] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={range === key}
-            className={`min-h-12 rounded-full text-sm font-semibold ${range === key ? "bg-primary text-white" : "bg-surface"}`}
-            onClick={() => setParams({ range: key })}
-          >
-            {key === "today" ? "Aujourd'hui" : key === "7d" ? "7 j" : "30 j"}
-          </button>
-        ))}
+      <PageHeader title="Ventes" subtitle="Vendez en toute sécurité." />
+      <div className="mb-4">
+        <SegmentedControl
+          ariaLabel="Période des ventes"
+          value={range}
+          onChange={(key) => setParams({ range: key })}
+          options={[
+            { value: "today", label: "Jour" },
+            { value: "7d", label: "Semaine" },
+            { value: "30d", label: "Mois" },
+          ]}
+        />
       </div>
       {state === "loading" ? <Skeleton className="h-24" /> : null}
       {state === "offline" ? <ErrorState message="Hors ligne : aucune vente en cache." /> : null}
@@ -87,7 +87,10 @@ export function SalesPage() {
           title="Aucune vente"
           text="Votre première vente apparaîtra ici"
           action={
-            <Link to="/app/charge" className="inline-flex min-h-12 items-center font-semibold text-primary">
+            <Link
+              to="/app/charge"
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-5 font-semibold text-white"
+            >
               Encaisser
             </Link>
           }
@@ -244,20 +247,20 @@ export function DashboardPage() {
   const data = query.data;
 
   return (
-    <Page title="Tableau de bord">
+    <Page>
       <ShopHeader />
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        {(["today", "7d", "30d"] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={range === key}
-            className={`min-h-12 rounded-full text-sm font-semibold ${range === key ? "bg-primary text-white" : "bg-surface"}`}
-            onClick={() => setRange(key)}
-          >
-            {key === "today" ? "Aujourd'hui" : key === "7d" ? "7 j" : "30 j"}
-          </button>
-        ))}
+      <PageHeader title="Tableau de bord" subtitle="Suivez votre activité." />
+      <div className="mb-4">
+        <SegmentedControl
+          ariaLabel="Période du tableau de bord"
+          value={range}
+          onChange={setRange}
+          options={[
+            { value: "today", label: "Jour" },
+            { value: "7d", label: "Semaine" },
+            { value: "30d", label: "Mois" },
+          ]}
+        />
       </div>
       <p className="mb-3 min-h-5 text-right">
         <UpdatedAgo at={query.dataUpdatedAt} />
@@ -274,7 +277,7 @@ export function DashboardPage() {
         <div className="jk-fade-in flex flex-col gap-4">
           {data.demo ? (
             <p className="rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
-              Mode démo : ces chiffres incluent un historique simulé.
+              Ces chiffres incluent un historique simulé.
             </p>
           ) : null}
           {data.kpis.salesCount < 5 ? (
@@ -283,7 +286,7 @@ export function DashboardPage() {
             </p>
           ) : null}
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-3">
-            <article className="rounded-xl bg-surface p-4 shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+            <article className="rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
               <p className="text-sm text-muted">{data.demo ? "Chiffre d'affaires de démonstration" : "Chiffre d'affaires"}</p>
               <p className="tabular text-[32px] leading-10 font-bold">{formatXof(data.kpis.revenueXof)}</p>
               <p className="text-sm">{formatDelta(data.kpis.revenueDeltaPct) ?? "Pas de comparaison"}</p>
@@ -388,7 +391,7 @@ export function DashboardPage() {
 
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
-    <article className="rounded-xl bg-surface p-3 shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+    <article className="rounded-xl bg-surface p-3 shadow-[var(--shadow-card)]">
       <p className="text-sm text-muted">{label}</p>
       <p className="tabular text-lg font-semibold">{value}</p>
     </article>
@@ -424,7 +427,6 @@ export function ScorePage() {
 
   return (
     <Page
-      title="Score"
       actionClassName="lg:hidden"
       action={
         <div>
@@ -446,7 +448,7 @@ export function ScorePage() {
       }
     >
       <ShopHeader />
-      <p className="mb-3 text-sm text-muted">Score indicatif, non utilisé pour un prêt.</p>
+      <PageHeader title="Score" subtitle="Score indicatif, non utilisé pour un prêt." />
       {state === "loading" ? <Skeleton className="h-40" /> : null}
       {state === "offline" ? <ErrorState message="Hors ligne : aucun score en cache." /> : null}
       {state === "error" ? <ErrorState message={messageOf(query.error)} onRetry={() => void query.refetch()} /> : null}
@@ -455,7 +457,7 @@ export function ScorePage() {
           <div>
           {data.demo ? (
             <p className="mb-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
-              Mode démo : ce score inclut un historique de ventes simulé.
+              Ce score inclut un historique de ventes simulé.
             </p>
           ) : null}
           {!data.eligible ? (

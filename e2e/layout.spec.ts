@@ -96,7 +96,7 @@ test("captures des écrans marchand en 1440", async ({ page }) => {
   await page.screenshot({ path: `${dir}/encaisser.png`, fullPage: true });
 
   await page.getByRole("button", { name: /2\s500/ }).click();
-  await page.getByRole("button", { name: "Générer le QR" }).click();
+  await page.getByRole("button", { name: /^Encaisser/ }).click();
   await expect(page.getByText("En attente du paiement")).toBeVisible();
   await expect(page.getByRole("img", { name: "QR de la facture" })).toBeVisible();
   await page.screenshot({ path: `${dir}/facture.png`, fullPage: true });

@@ -104,7 +104,7 @@ describe("les vraies erreurs restent visibles et ne sont pas rejouees", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "2" }));
     await user.click(screen.getByRole("button", { name: "5" }));
-    await user.click(screen.getByRole("button", { name: "Générer le QR" }));
+    await user.click(screen.getByRole("button", { name: /^Encaisser/ }));
     expect(await screen.findByText("La création a échoué, rien n'a été enregistré.")).toBeInTheDocument();
     await wait(300);
     expect(h.count("POST /api/invoices")).toBe(1);

@@ -14,7 +14,7 @@ export function AmountPad({ value, onChange }: { value: number; onChange: (next:
           key={key}
           type="button"
           aria-label={key === "back" ? "Effacer" : key}
-          className="min-h-12 rounded-xl bg-surface text-xl font-semibold tabular shadow-[0_1px_2px_rgba(17,24,39,0.08)] active:bg-bg"
+          className="min-h-14 rounded-xl bg-surface text-xl font-semibold tabular shadow-[var(--shadow-card)] active:bg-bg"
           onPointerDown={() => {
             if (key !== "back") return;
             hold.current = window.setTimeout(() => onChange(0), 500);

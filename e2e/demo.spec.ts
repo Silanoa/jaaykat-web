@@ -272,9 +272,8 @@ test("parcours 2 : 2 500 F, QR, paiement simulé, écran payé", async ({ page }
   await seedSession(page);
   await page.goto("/app/charge");
   await page.getByRole("button", { name: /2\s500/ }).click();
-  await page.getByRole("button", { name: "Générer le QR" }).click();
+  await page.getByRole("button", { name: /^Encaisser/ }).click();
   await expect(page.getByText("En attente du paiement")).toBeVisible();
-  await expect(page.getByText("Mode démo", { exact: true })).toBeVisible();
   await expect(page.getByRole("img", { name: "QR de la facture" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Payé" })).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: "Nouvelle vente" }).click();
@@ -287,7 +286,7 @@ test("parcours démo : scan du QR, choix Wave, paiement reçu", async ({ page })
   await seedSession(page);
   await page.goto("/app/charge");
   await page.getByRole("button", { name: /2\s500/ }).click();
-  await page.getByRole("button", { name: "Générer le QR" }).click();
+  await page.getByRole("button", { name: /^Encaisser/ }).click();
   await expect(page.getByText("En attente du client")).toBeVisible();
   await expect(page.getByRole("img", { name: "QR de la facture" })).toBeVisible();
   await expect(page.getByText("Confirmation automatique en ~5 s.")).toHaveCount(0);
@@ -295,7 +294,6 @@ test("parcours démo : scan du QR, choix Wave, paiement reçu", async ({ page })
   await expect(page.getByRole("heading", { name: "Payé" })).toHaveCount(0);
   await page.goto("/p/awa-beaute?facture=inv-comptoir");
   await expect(page.getByRole("heading", { name: "Awa Beauté" })).toBeVisible();
-  await expect(page.getByText("Paiement simulé, aucune somme débitée")).toBeVisible();
   await page.getByRole("button", { name: /^Wave/ }).click();
   await page.getByRole("button", { name: /Confirmer le paiement de/ }).click();
   await expect(page.getByRole("heading", { name: "Paiement en cours" })).toBeVisible();
@@ -327,7 +325,7 @@ test("parcours 7 : hors ligne, lecture du tableau, encaissement bloqué", async 
   await expect(page.getByText(/Hors ligne/)).toBeVisible();
   await page.getByRole("link", { name: "Encaisser" }).click();
   await expect(page.getByText("Il faut du réseau pour encaisser.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Générer le QR" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Encaisser", exact: true })).toBeDisabled();
 });
 
 test("tableau et score affichent les chiffres de l'API", async ({ page }) => {

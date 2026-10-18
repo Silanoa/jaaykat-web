@@ -6,9 +6,11 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "public", "icons");
 mkdirSync(root, { recursive: true });
 
-const green = [11, 110, 79, 255];
-const cream = [250, 247, 242, 255];
-const accent = [247, 147, 26, 255];
+/** JAAYKAT V brand */
+const navy = [11, 13, 36, 255];
+const canvas = [249, 252, 255, 255];
+const orange = [255, 77, 0, 255];
+const white = [255, 255, 255, 255];
 
 const bolt = [
   [0.42, 0.18],
@@ -80,21 +82,38 @@ function png(size, pixel) {
   ]);
 }
 
+function roundedRect(nx, ny, margin, radius) {
+  const x0 = margin;
+  const y0 = margin;
+  const x1 = 1 - margin;
+  const y1 = 1 - margin;
+  if (nx < x0 || ny < y0 || nx > x1 || ny > y1) return false;
+  const nearLeft = nx - x0 < radius;
+  const nearRight = x1 - nx < radius;
+  const nearTop = ny - y0 < radius;
+  const nearBottom = y1 - ny < radius;
+  if (!(nearLeft || nearRight) || !(nearTop || nearBottom)) return true;
+  const cx = nearLeft ? x0 + radius : x1 - radius;
+  const cy = nearTop ? y0 + radius : y1 - radius;
+  const dx = nx - cx;
+  const dy = ny - cy;
+  return dx * dx + dy * dy <= radius * radius;
+}
+
 function iconPixel(maskable) {
   return (x, y, size) => {
     const nx = x / (size - 1);
     const ny = y / (size - 1);
-    const cx = nx - 0.5;
-    const cy = ny - 0.5;
-    const inCircle = cx * cx + cy * cy < 0.16;
-    const scaled = bolt.map(([px, py]) => [0.18 + px * 0.64, 0.16 + py * 0.68]);
-    if (!maskable) {
-      const margin = 0.06;
-      if (nx < margin || ny < margin || nx > 1 - margin || ny > 1 - margin) return cream;
-    }
-    if (pointInPoly(nx, ny, scaled)) return accent;
-    if (inCircle) return cream;
-    return green;
+    const margin = maskable ? 0.1 : 0.08;
+    const radius = 0.18;
+    const inTile = roundedRect(nx, ny, margin, radius);
+    if (!inTile) return maskable ? navy : canvas;
+
+    const localX = (nx - margin) / (1 - 2 * margin);
+    const localY = (ny - margin) / (1 - 2 * margin);
+    const scaled = bolt.map(([px, py]) => [px, py]);
+    if (pointInPoly(localX, localY, scaled)) return white;
+    return orange;
   };
 }
 
@@ -102,3 +121,4 @@ writeFileSync(join(root, "icon-192.png"), png(192, iconPixel(false)));
 writeFileSync(join(root, "icon-512.png"), png(512, iconPixel(false)));
 writeFileSync(join(root, "icon-512-maskable.png"), png(512, iconPixel(true)));
 writeFileSync(join(root, "apple-touch-icon.png"), png(180, iconPixel(false)));
+console.log("icons written to", root);

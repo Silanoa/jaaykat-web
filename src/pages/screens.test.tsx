@@ -69,7 +69,7 @@ describe("états des écrans", () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
     renderAt("/app/charge", routeFetch({ "/api/auth/me": () => jsonResponse(200, me) }), true);
     expect(await screen.findByText("Il faut du réseau pour encaisser.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Générer le QR" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Encaisser" })).toBeDisabled();
   });
 
   it("laisse le bouton désactivé tant que le montant est à zéro", async () => {
@@ -89,7 +89,7 @@ describe("états des écrans", () => {
       }),
       true,
     );
-    const button = await screen.findByRole("button", { name: "Générer le QR" });
+    const button = await screen.findByRole("button", { name: "Encaisser" });
     expect(button).toBeDisabled();
     expect(screen.getByText("0 F")).toBeInTheDocument();
   });
@@ -104,7 +104,6 @@ describe("états des écrans", () => {
       true,
     );
     expect(await screen.findByText("En attente du paiement")).toBeInTheDocument();
-    expect(screen.getByText("Mode démo")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Nouvelle vente" })).not.toBeInTheDocument();
   });
 
@@ -168,8 +167,7 @@ describe("états des écrans", () => {
       }
       return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
     });
-    expect(await screen.findByText("Paiement simulé, aucune somme débitée")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
     expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
     for (const name of [/^Portefeuille Lightning/, /^Wave/, /^Orange Money/, /^Yas/, /^Expresso/]) {
       expect(screen.getByRole("button", { name })).toBeEnabled();
@@ -252,7 +250,6 @@ describe("états des écrans", () => {
     }
     await user.click(screen.getByRole("button", { name: "Payer" }));
     expect(await screen.findByRole("button", { name: /^Wave/ })).toBeInTheDocument();
-    expect(screen.getByText("Paiement simulé, aucune somme débitée")).toBeInTheDocument();
   });
 
   it("propose le portefeuille Lightning avec facture, copie et lien lightning:", async () => {
@@ -328,7 +325,6 @@ describe("états des écrans", () => {
     expect(screen.getByRole("button", { name: "Nouvelle vente" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Voir la vente" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Copier la preuve" })).toBeEnabled();
-    expect(screen.getByText("Paiement simulé")).toBeInTheDocument();
     expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
     expect(screen.getByText(/4\s230 sats/)).toBeInTheDocument();
   });

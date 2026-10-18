@@ -46,7 +46,7 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 ## Accessibilité
 
 - Champs avec libellés, `aria-live` sur l'attente et l'écran payé, focus visible global, champs à 16 px (pas de zoom iOS), cibles de 48 px, zone de sécurité iOS sur la barre d'action et la bannière.
-- Contrastes : texte principal et secondaire au-dessus de 4,5:1 sur le fond crème et sur blanc ; texte blanc sur vert `#0b6e4f` au-dessus de 6:1.
+- Contrastes : texte principal et secondaire au-dessus de 4,5:1 sur fond `#F9FCFF` et blanc ; texte blanc sur navy `#0B0D24` au-dessus de 6:1. L'orange `#FF4D00` sert aux aplats, liens et accents (pas au corps de texte long).
 - Formats fr-FR : espace fine insécable pour les milliers, espace insécable avant « F », XOF en premier, sats en secondaire.
 
 ## Performance et PWA

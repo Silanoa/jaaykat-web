@@ -8,6 +8,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    // Node >= 25 exposes a native localStorage that shadows jsdom's and is undefined without --localstorage-file.
+    poolOptions: { forks: { execArgv: ["--no-experimental-webstorage"] } },
   },
   plugins: [
     react(),
@@ -24,8 +26,8 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         lang: "fr",
-        background_color: "#FAF7F2",
-        theme_color: "#0B6E4F",
+        background_color: "#F9FCFF",
+        theme_color: "#0B0D24",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },

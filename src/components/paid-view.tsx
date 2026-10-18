@@ -8,8 +8,8 @@ function displayProof(value: string): string {
 
 export function CheckBadge() {
   return (
-    <span className="jk-check-circle grid size-24 place-items-center rounded-full bg-success-bg" aria-hidden="true">
-      <svg viewBox="0 0 24 24" className="size-12 text-primary" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+    <span className="jk-check-circle grid size-24 place-items-center rounded-full bg-success" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="size-12 text-white" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <path className="jk-check-path" d="M5 12.5l4.5 4.5L19 7.5" />
       </svg>
     </span>
@@ -33,10 +33,10 @@ export function PaidView({ title, amountXof, amountSats, paidAt, subject, subjec
     <section className="jk-fade-in flex min-h-0 flex-1 flex-col items-center px-6 pt-8 pb-6 text-center" aria-live="polite">
       <div className="my-auto flex w-full max-w-sm flex-col items-center">
         <CheckBadge />
-        <h1 className="mt-6 text-lg font-semibold text-primary">{title}</h1>
+        <h1 className="mt-6 text-lg font-semibold text-success">{title}</h1>
         <p className="tabular mt-2 text-[44px] leading-[52px] font-bold tracking-tight">{formatXof(amountXof)}</p>
         {amountSats ? <p className="tabular mt-1 text-sm text-subtle">{formatSats(amountSats)}</p> : null}
-        <dl className="mt-8 w-full divide-y divide-black/10 rounded-2xl bg-surface text-left text-sm shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+        <dl className="mt-8 w-full divide-y divide-black/10 rounded-2xl bg-surface text-left text-sm shadow-[var(--shadow-card)]">
           {subject ? (
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <dt className="text-muted">{subjectLabel}</dt>
@@ -62,7 +62,6 @@ export function PaidView({ title, amountXof, amountSats, paidAt, subject, subjec
         {primary}
         {secondary}
       </div>
-      <p className="mt-6 text-xs text-subtle">Paiement simulé</p>
     </section>
   );
 }

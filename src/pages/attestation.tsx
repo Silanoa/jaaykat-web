@@ -13,10 +13,10 @@ import type { Attestation } from "../lib/schemas";
 function environmentNote(environment: string): string | null {
   if (environment === "live" || environment === "production") return null;
   if (environment === "sandbox") {
-    return "Mode démo : paiements de test, aucun argent réel.";
+    return "Paiements de test, aucun argent réel.";
   }
   if (environment === "mock") {
-    return "Mode démo : paiements simulés, aucun argent réel.";
+    return "Paiements simulés, aucun argent réel.";
   }
   if (environment === "unknown") {
     return "Environnement non vérifié : ne pas supposer que ces paiements sont réels.";
@@ -41,7 +41,7 @@ function Details({ data }: { data: Attestation }) {
         </p>
       ) : null}
       {note ? <p className="mt-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">{note}</p> : null}
-      <article className="mt-3 rounded-xl bg-surface p-4 shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+      <article className="mt-3 rounded-xl bg-surface p-4 shadow-[var(--shadow-card)]">
         <h2 className="text-xl font-semibold">{data.shopName}</h2>
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-muted">Période</dt>
@@ -149,7 +149,7 @@ export function AttestationPage() {
           <>
             <p
               role="status"
-              className={`rounded-xl px-3 py-2 text-sm font-medium ${data.status === "valid" ? "bg-success-bg text-primary-strong" : "bg-danger-bg text-danger"}`}
+              className={`rounded-xl px-3 py-2 text-sm font-medium ${data.status === "valid" ? "bg-success-bg text-success" : "bg-danger-bg text-danger"}`}
             >
               {statusLine(data)}
             </p>

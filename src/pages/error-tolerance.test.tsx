@@ -131,7 +131,7 @@ describe("erreurs transitoires côté marchand et boutique", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "2" }));
     await user.click(screen.getByRole("button", { name: "5" }));
-    expect(await screen.findByRole("button", { name: "Générer le QR" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: /^Encaisser/ })).toBeEnabled();
     expect(rateCalls).toBeGreaterThanOrEqual(3);
     expect(retry.seen.ever).toBe(false);
     retry.stop();

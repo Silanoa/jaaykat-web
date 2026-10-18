@@ -1,5 +1,11 @@
 import type { InvoiceStatus, PayMethod, PayoutNetwork, PayoutStatus } from "./schemas";
+import { formatXof } from "./format";
 import { CATEGORIES } from "./validation";
+
+/** Libellé du CTA d'encaissement (accessible name pour les tests). */
+export function chargeCtaLabel(amount: number): string {
+  return amount > 0 ? `Encaisser ${formatXof(amount)}` : "Encaisser";
+}
 
 export function categoryLabel(value: string): string {
   return CATEGORIES.find((category) => category.value === value)?.label ?? value;

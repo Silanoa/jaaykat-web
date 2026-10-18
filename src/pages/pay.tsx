@@ -147,10 +147,6 @@ function ShopCheckout({ slug }: { slug: string }) {
   );
 }
 
-function DemoNote() {
-  return <p className="mt-6 text-center text-xs text-subtle">Paiement simulé, aucune somme débitée</p>;
-}
-
 function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -283,7 +279,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
                 aria-label={`${choice.label}, ${choice.hint}`}
                 disabled={Boolean(block)}
                 onClick={() => setSelected(choice.method)}
-                className="flex min-h-16 items-center gap-3 rounded-xl border border-black/10 bg-surface px-4 text-left shadow-[0_1px_2px_rgba(17,24,39,0.06)] active:bg-bg disabled:opacity-50"
+                className="flex min-h-16 items-center gap-3 rounded-xl border border-black/10 bg-surface px-4 text-left shadow-[var(--shadow-card)] active:bg-bg disabled:opacity-50"
               >
                 <PayLogo method={choice.method} />
                 <span className="flex min-w-0 flex-1 flex-col">
@@ -295,7 +291,6 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
             ))}
           </div>
           {block ? <p className="mt-3 text-sm text-warning">{block}</p> : null}
-          <DemoNote />
         </Page>
       </PublicShell>
     );
@@ -324,7 +319,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
             </div>
           }
         >
-          <dl className="divide-y divide-black/10 rounded-2xl bg-surface text-sm shadow-[0_1px_2px_rgba(17,24,39,0.08)]">
+          <dl className="divide-y divide-black/10 rounded-2xl bg-surface text-sm shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <dt className="text-muted">Boutique</dt>
               <dd className="truncate font-medium">{shopName}</dd>
@@ -345,9 +340,8 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
           <p className="mt-2 text-sm text-muted">
             {lightning
               ? "Vous payez la facture Lightning avec votre portefeuille."
-              : "Mode démo : aucune somme débitée."}
+              : "Aucune somme n'est débitée."}
           </p>
-          <DemoNote />
         </Page>
       </PublicShell>
     );
@@ -389,7 +383,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
                 bolt11={bolt11}
                 note={
                   demoPayment
-                    ? "Mode démo : règlement simulé."
+                    ? "Règlement simulé."
                     : "Payez cette facture avec un portefeuille Lightning."
                 }
               />
@@ -401,9 +395,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
             </p>
           ) : null}
           {demoPayment ? null : (
-            <p className="mt-2 text-center text-xs text-subtle">
-              Mode démo : confirmation automatique.
-            </p>
+            <p className="mt-2 text-center text-xs text-subtle">Confirmation automatique.</p>
           )}
           {payStart.failed ? (
             <p role="alert" className="mt-3 text-center text-sm text-danger">
@@ -420,7 +412,6 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
               </button>
             </p>
           ) : null}
-          {demoPayment ? <DemoNote /> : null}
         </div>
       </Page>
     </PublicShell>
@@ -436,14 +427,14 @@ function Help({ slug }: { slug: string }) {
       <Page
         title="Comment payer ?"
         action={
-          <Link to={`/p/${slug}`} className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-primary font-semibold text-white">
+          <Link to={`/p/${slug}`} className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-navy font-semibold text-white">
             Retour
           </Link>
         }
       >
         {simulated ? (
           <p>
-            Mode démo : aucune somme débitée. Scannez le QR, puis choisissez Wave, Orange Money, Yas ou Expresso.
+            Aucune somme n&apos;est débitée. Scannez le QR, puis choisissez Wave, Orange Money, Yas ou Expresso.
           </p>
         ) : (
           <>

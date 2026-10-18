@@ -6,7 +6,7 @@ import { QrImage } from "./qr-image";
 export function LightningPanel({ bolt11, note }: { bolt11: string; note: string }) {
   return (
     <div className="flex flex-col items-center">
-      <QrImage value={bolt11} label="QR de la facture Lightning" className="mx-auto size-[220px] rounded-2xl shadow-[0_1px_2px_rgba(17,24,39,0.08)]" />
+      <QrImage value={bolt11} label="QR de la facture Lightning" className="mx-auto size-[220px] rounded-2xl shadow-[var(--shadow-card)]" />
       <div className="mt-3 flex w-full max-w-sm flex-col gap-2">
         <a
           href={lightningUri(bolt11)}

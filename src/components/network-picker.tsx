@@ -16,9 +16,13 @@ export function NetworkPicker({ value, onChange }: { value: PayoutNetwork; onCha
             <label
               key={item}
               data-selected={selected}
-              className={`relative flex min-h-[92px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 px-2 py-3 text-center has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary has-[:focus-visible]:ring-offset-2 ${
-                selected ? "border-primary bg-success-bg" : "border-black/10 bg-surface"
+              className={`relative flex min-h-[92px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 px-2 py-3 text-center has-[:focus-visible]:shadow-[0_0_0_2px_var(--color-bg),0_0_0_4px_var(--color-primary)] ${
+                selected ? "border-primary bg-brand-soft" : "border-black/10 bg-surface"
               }`}
+              onMouseDown={(event) => {
+                // Avoid scroll-into-view jump when tapping tiles mid-form on short viewports.
+                if (event.detail > 0) event.preventDefault();
+              }}
             >
               <input
                 type="radio"

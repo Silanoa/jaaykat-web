@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { PaidView } from "../components/paid-view";
 import { QrImage } from "../components/qr-image";
 import { BackButton } from "../components/shell";
-import { Button, ErrorState, Page, Skeleton } from "../components/ui";
+import { Button, ErrorState, Page, PageHeader, Skeleton } from "../components/ui";
 import { useNow } from "../hooks/useNow";
 import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
@@ -83,7 +83,7 @@ export function InvoicePage() {
     return (
       <Page>
         <BackButton to="/app/charge" label="Retour" />
-        <h1 className="mb-2 text-[22px] leading-7 font-semibold">Facture</h1>
+        <PageHeader title="Facture" subtitle="Préparation de la demande de paiement…" />
         <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
           <div className="flex flex-col items-center gap-2 lg:items-start">
             <Skeleton className="h-10 w-40" />
@@ -155,7 +155,7 @@ export function InvoicePage() {
       }
     >
       <BackButton to="/app/charge" label="Retour" />
-      <h1 className="mb-2 text-[22px] leading-7 font-semibold">Facture</h1>
+      <PageHeader title="Facture" subtitle="Montrez le QR au client. Le statut se met à jour tout seul." />
       {pollFailing && waiting ? (
         <p role="alert" className="mb-2 text-sm text-warning">
           Connexion instable, dernière mise à jour affichée.{" "}
@@ -188,9 +188,7 @@ export function InvoicePage() {
             </p>
           ) : null}
           {wait.autoSettle ? (
-            <p className="mt-3 text-center text-sm text-muted lg:text-left">
-              Mode démo : confirmation automatique.
-            </p>
+            <p className="mt-3 text-center text-sm text-muted lg:text-left">Confirmation automatique.</p>
           ) : null}
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button type="button" variant="secondary" onClick={() => void copyInvoice()} disabled={!qrValue}>

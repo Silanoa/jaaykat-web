@@ -108,7 +108,7 @@ describe("écran Score : attestation", () => {
 
   it("signale les données de démonstration et affiche les règles de calcul", async () => {
     renderAt("/app/score", harness(score({ demo: true })).fetchImpl, true);
-    expect(await screen.findByText(/Mode démo : ce score inclut un historique/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ce score inclut un historique/)).toBeInTheDocument();
     const rules = await screen.findByRole("region", { name: "Règles du score" });
     expect(rules).toHaveTextContent("90 derniers jours");
     expect(rules).toHaveTextContent("20 ventes payées");
@@ -179,7 +179,7 @@ describe("attestation publique", () => {
   it("étiquette la démonstration et le réseau de test", async () => {
     renderAt("/s/tok", publicHarness(attestation({ demo: true, environment: "sandbox" })));
     expect(await screen.findByText(/Démo : historique de ventes simulé/)).toBeInTheDocument();
-    expect(screen.getByText(/Mode démo : paiements de test/)).toBeInTheDocument();
+    expect(screen.getByText(/Paiements de test, aucun argent réel/)).toBeInTheDocument();
     const atteste = screen.getByRole("region", { name: "Ce que cette attestation atteste" });
     expect(atteste).toHaveTextContent("Rien de réel");
     expect(atteste).not.toHaveTextContent("paiements Lightning ont été enregistrés");

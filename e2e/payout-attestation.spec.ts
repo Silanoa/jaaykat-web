@@ -109,7 +109,7 @@ for (const viewport of VIEWPORTS) {
     await expect(page.getByText("71 / 100")).toBeVisible();
     await expect(page.getByRole("region", { name: "Ce qu'elle n'atteste pas" })).toBeVisible();
     await expect(page.getByRole("img", { name: /QR code de vérification/ })).toBeVisible();
-    await expect(page.getByText(/Mode démo : paiements de test/)).toBeVisible();
+    await expect(page.getByText(/Paiements de test, aucun argent réel/)).toBeVisible();
     expect(await page.locator("body").innerText()).not.toMatch(/\+221|\b77\d{7}\b/);
     await noHorizontalOverflow(page);
     await settled(page);

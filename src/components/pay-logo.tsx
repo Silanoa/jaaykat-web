@@ -19,7 +19,7 @@ export function PayLogo({ method, size = 44 }: { method: PayMethod; size?: numbe
     );
   }
   return (
-    <span data-pay-logo={method} aria-hidden="true" className="grid shrink-0 place-items-center rounded-[10px] bg-[#F7931A] text-white" style={box}>
+    <span data-pay-logo={method} aria-hidden="true" className="grid shrink-0 place-items-center rounded-[10px] bg-accent text-white" style={box}>
       <Zap size={Math.round(size * 0.55)} fill="currentColor" strokeWidth={1.5} />
     </span>
   );
