@@ -166,7 +166,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const poll = useQuery({
     queryKey,
     queryFn: () => api.getPublicInvoice(invoiceId),
-    retry: (failureCount, caught) => !(caught instanceof ApiError && caught.status === 404) && failureCount < 3,
+    retry: shouldRetry,
     retryDelay: pollRetryDelay,
     refetchInterval: (state) => {
       const current = state.state.data?.status;

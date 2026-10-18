@@ -11,6 +11,7 @@ import { useApi } from "../lib/api-context";
 import { countdown, formatSats, formatWhen, formatXof } from "../lib/format";
 import { networkLabel, payoutStatusLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
+import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS } from "../lib/resilience";
 import { signOut } from "../lib/sign-out";
 import { readQuickAmounts, writeQuickAmounts } from "../lib/quick-amounts";
 import type { PayoutNetwork, PayoutQuote } from "../lib/schemas";
@@ -29,6 +30,7 @@ export function BalancePage() {
   const api = useApi();
   const online = useOnline();
   const query = useQuery({ queryKey: ["balance"], queryFn: () => api.balance() });
+  const now = useNow();
   return (
     <Page
       title="Solde"
@@ -48,7 +50,15 @@ export function BalancePage() {
       <ShopHeader />
       {!online ? <p className="mb-3 text-sm text-warning">{postBlockReason("payout", false)}</p> : null}
       {query.isLoading ? <Skeleton className="h-24" /> : null}
-      {query.isError ? (
+      {query.isError && query.data && now - query.dataUpdatedAt > PERSISTENT_FAILURE_MS ? (
+        <p role="alert" className="mb-2 text-sm text-warning">
+          Mise à jour impossible, données affichées peut-être périmées.{" "}
+          <button type="button" className="min-h-12 underline" onClick={() => void query.refetch()}>
+            Réessayer
+          </button>
+        </p>
+      ) : null}
+      {query.isError && !query.data ? (
         <ErrorState
           message={query.error instanceof ApiError ? query.error.message : "Solde indisponible."}
           onRetry={() => void query.refetch()}
@@ -273,9 +283,10 @@ export function PayoutStatusPage() {
     refetchInterval: (state) => {
       const status = state.state.data?.status;
       if (!status || isTerminalPayout(status)) return false;
-      return 2000;
+      return POLL_INTERVAL_MS;
     },
   });
+  const now = useNow();
   const payout = query.data;
   return (
     <Page
@@ -288,7 +299,15 @@ export function PayoutStatusPage() {
     >
       <p className="text-sm text-muted">Simulation, aucun argent réel.</p>
       {query.isLoading ? <Skeleton className="mt-4 h-24" /> : null}
-      {query.isError ? (
+      {query.isError && query.data && now - query.dataUpdatedAt > PERSISTENT_FAILURE_MS ? (
+        <p role="alert" className="mb-2 text-sm text-warning">
+          Mise à jour impossible, données affichées peut-être périmées.{" "}
+          <button type="button" className="min-h-12 underline" onClick={() => void query.refetch()}>
+            Réessayer
+          </button>
+        </p>
+      ) : null}
+      {query.isError && !payout ? (
         <ErrorState message={query.error instanceof ApiError ? query.error.message : "Suivi indisponible."} onRetry={() => void query.refetch()} />
       ) : null}
       {payout ? (
@@ -410,7 +429,7 @@ export function SystemPage() {
     <Page title="Journal API">
       <BackButton to="/app/settings" />
       {query.isLoading ? <Skeleton className="h-24" /> : null}
-      {query.isError ? (
+      {query.isError && !query.data ? (
         <ErrorState message={query.error instanceof ApiError ? query.error.message : "Journal indisponible."} onRetry={() => void query.refetch()} />
       ) : null}
       {query.data ? (

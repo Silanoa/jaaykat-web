@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { AppRoutes } from "../app/routes";
 import { ApiProvider } from "../lib/api-context";
 import { createApi } from "../lib/api";
+import { emitUnauthenticated } from "../lib/auth-events";
 import { writeStoredSession } from "../lib/session";
 import { useSession } from "../stores/session";
 
@@ -17,7 +18,7 @@ export function renderAt(path: string, fetchImpl: typeof fetch, authenticated = 
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  const api = createApi({ storage: localStorage, fetch: fetchImpl });
+  const api = createApi({ storage: localStorage, fetch: fetchImpl, onUnauthenticated: emitUnauthenticated });
   const view = render(
     <QueryClientProvider client={client}>
       <ApiProvider api={api}>

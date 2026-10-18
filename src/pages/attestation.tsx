@@ -5,6 +5,7 @@ import { ErrorState, Page, Skeleton } from "../components/ui";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
 import { formatWhen } from "../lib/format";
+import { pollRetryDelay, shouldRetry } from "../lib/resilience";
 
 export function AttestationPage() {
   const { token = "" } = useParams();
@@ -12,7 +13,8 @@ export function AttestationPage() {
   const query = useQuery({
     queryKey: ["attestation", token],
     queryFn: () => api.attestation(token),
-    retry: false,
+    retry: shouldRetry,
+    retryDelay: pollRetryDelay,
   });
 
   return (
