@@ -11,6 +11,10 @@ export async function signOut(api: Pick<ApiClient, "logout">, online: boolean): 
       useToast.getState().show("Déconnexion locale : le serveur n'a pas répondu.");
     }
   }
+  await clearLocalData();
+}
+
+export async function clearLocalData(): Promise<void> {
   useSession.getState().clear();
   queryClient.clear();
   if ("caches" in window) {

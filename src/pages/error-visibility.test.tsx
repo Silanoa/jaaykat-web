@@ -2,6 +2,7 @@ import { focusManager } from "@tanstack/react-query";
 import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { queryClient } from "../lib/query-client";
 import { jsonResponse, renderAt } from "../test/render";
 
 vi.mock("../lib/resilience", async (importOriginal) => {
@@ -144,5 +145,25 @@ describe("les vraies erreurs restent visibles et ne sont pas rejouees", () => {
     expect(document.body.textContent).toMatch(/5\s?000/);
     expect(watch.seen.ever).toBe(false);
     watch.stop();
+  });
+
+  it("vide le cache local quand la session expire, pour ne pas montrer les chiffres au marchand suivant", async () => {
+    const deleted: string[] = [];
+    vi.stubGlobal("caches", {
+      keys: async () => ["jk-api-read"],
+      delete: async (key: string) => {
+        deleted.push(key);
+        return true;
+      },
+    });
+    queryClient.setQueryData(["dashboard", "today"], { secret: "chiffres du marchand precedent" });
+    const h = harness((path) =>
+      path === "/api/invoices/inv-1" ? jsonResponse(401, { error: "UNAUTHENTICATED", message: "Session expir\u00e9e" }) : undefined,
+    );
+    renderAt("/app/invoice/inv-1", h.fetchImpl, true);
+    expect(await screen.findByRole("heading", { name: "Se connecter" }, { timeout: 3000 })).toBeInTheDocument();
+    await waitFor(() => expect(deleted).toEqual(["jk-api-read"]));
+    expect(queryClient.getQueryData(["dashboard", "today"])).toBeUndefined();
+    vi.unstubAllGlobals();
   });
 });

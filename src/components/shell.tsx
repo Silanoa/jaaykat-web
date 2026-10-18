@@ -5,6 +5,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useOnline } from "../hooks/useOnline";
 import { useApi } from "../lib/api-context";
 import { subscribeUnauthenticated } from "../lib/auth-events";
+import { clearLocalData } from "../lib/sign-out";
 import { offlineBannerText } from "../lib/offline";
 import { signOut } from "../lib/sign-out";
 import { useSession } from "../stores/session";
@@ -16,7 +17,7 @@ export function SessionListener() {
   useEffect(
     () =>
       subscribeUnauthenticated(() => {
-        useSession.getState().clear();
+        void clearLocalData();
         navigate("/app/login", { replace: true, state: { expired: true } });
       }),
     [navigate],
