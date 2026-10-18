@@ -43,8 +43,6 @@ Session : jeton opaque dans `localStorage` sous `jk.session` (`{ token, expiresA
 
 ## Docs
 
-- [Design](docs/superpowers/specs/2026-10-17-jaaykat-web-design.md)
-- [Plan](docs/superpowers/plans/2026-10-17-jaaykat-web-implementation.md)
 - [Formes JSON supposées](docs/formes-supposees.md)
 
 Licence MIT.
