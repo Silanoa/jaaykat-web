@@ -90,7 +90,7 @@ test("connexion en 390 : pas de panneau de marque, colonne unique", async ({ pag
 test("captures des écrans marchand en 1440", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await seedSession(page);
-  const dir = "/opt/cursor/artifacts/screenshots";
+  const dir = "test-results/screenshots";
   await page.goto("/app/charge");
   await expect(page.locator('nav[aria-label="Espace marchand"]')).toBeVisible();
   await page.screenshot({ path: `${dir}/encaisser.png`, fullPage: true });

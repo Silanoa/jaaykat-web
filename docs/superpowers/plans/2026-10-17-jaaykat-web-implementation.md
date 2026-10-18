@@ -1,6 +1,5 @@
 # jaaykat-web Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. TDD pour client API, validation, formatters.
 
 **Goal:** PWA marchand + pages client/attestation, installable, branchée sur jaaykat-api.
 
