@@ -31,7 +31,7 @@ La facture marchand (`POST` et `GET /api/invoices`) et la facture publique cré�
 
 `GET /api/public/invoices/:id` ajoute `demoPayment` et `payMethod` (`null` tant que personne n'a payé).
 
-`POST /api/public/invoices/:id/pay` corps `{ "method": "wave" | "orange" | "yas" | "expresso" }` (`free` accepté comme alias de `yas`) → `{ status, amountXof, expiresAt, demoPayment: true, payMethod }`. Pas de clé d'idempotence dans ce contrat. Si la réponse finale de l'API diffère, réaligner `src/lib/schemas.ts` sur elle.
+`POST /api/public/invoices/:id/pay` corps `{ "method": "lightning" | "wave" | "orange" | "yas" | "expresso" }` (`free` accepté comme alias de `yas`) → `{ status, amountXof, expiresAt, demoPayment: true, payMethod }`. Pas de clé d'idempotence dans ce contrat. Si la réponse finale de l'API diffère, réaligner `src/lib/schemas.ts` sur elle.
 
 ## Champs supposés, à confirmer côté API
 
@@ -83,17 +83,13 @@ La facture marchand (`POST` et `GET /api/invoices`) et la facture publique cré�
 
 `payout` : `{ id, status, amountXof, network, reference, failureReason? }`
 
-`network` : `wave | orange | free | expresso`
+`network` : `wave | orange | free | expresso` (`free` est la valeur Bitnob de Yas, affichée Yas ; le formulaire envoie `free`, l'API accepte aussi `yas`)
 
-`GET /api/system` → `{ env, platformBalances, lastCalls: [{ at, method, path, status, durationMs, correlationId }], seedHistory? }`
+`GET /api/system` → `{ env, demoPayMode, platformBalances, lastCalls: [{ at, method, path, status, durationMs, correlationId }], seedHistory? }`
 
-## Route absente du contrat
+## Attestation
 
-L'attestation `/s/:token` n'a pas de GET dans `CONTRACTS.md`. La page appelle :
-
-`GET /api/public/shares/:token` → `{ shopName, score, band, period, salesCount, computedAt, expiresAt, status }`
-
-`status` : `valid | expired | revoked`. Tant que l'API ne l'expose pas, l'écran affiche l'erreur, sans données inventées.
+`GET /api/public/shares/:token` est documentée dans `CONTRACTS.md` de `jaaykat-api` : `{ shopName, score, band, period, salesCount, computedAt, expiresAt, status }`, `status` : `valid | expired | revoked`, jeton inconnu : 404 (écran « Attestation introuvable »).
 
 ## Préférences locales, pas des routes
 

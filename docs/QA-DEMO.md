@@ -26,7 +26,8 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 - Tableau de bord, ventes, score et attestation, retrait avec devis, solde.
 - Page boutique publique sans session.
 - Hors ligne : lecture du tableau en cache, encaissement bloqué avec message.
-- Erreur réseau ou API : état d'erreur avec bouton « Réessayer ».
+- Erreur réseau ou API : les lectures sont réessayées (3 fois, attente progressive) puis l'état d'erreur avec bouton « Réessayer » s'affiche. 400, 401, 404, 409 et 422 s'affichent tout de suite. Une 401 redirige vers la connexion et vide le cache local. Sur facture marchand, solde et suivi de retrait, un rafraîchissement qui échoue garde les données affichées et n'avertit qu'après 15 s ; le journal API garde aussi ses données, sans avertissement.
+- Aucune écriture n'est rejouée automatiquement (inscription, connexion, facture, devis et retrait, partage du score) ; seul `/pay` l'est, car il est idempotent. Test : `src/lib/retry-policy.test.ts`.
 - Parcours client : après la confirmation, l'écran Paiement en cours s'affiche tout de suite. Les erreurs transitoires de `/pay` et du polling (429, 5xx, coupure) sont réessayées sans rien afficher ; le message avec bouton « Réessayer » n'apparaît qu'après 15 s d'échec persistant.
 
 ## Fraîcheur des données et flashs
