@@ -11,6 +11,7 @@ import { useApi } from "../lib/api-context";
 import { formatXof } from "../lib/format";
 import { postBlockReason } from "../lib/offline";
 import { readQuickAmounts } from "../lib/quick-amounts";
+import { pollRetryDelay, shouldRetry } from "../lib/resilience";
 import { useSession } from "../stores/session";
 
 export function ChargePage() {
@@ -27,6 +28,8 @@ export function ChargePage() {
   const rates = useQuery({
     queryKey: ["rates"],
     queryFn: () => api.rates(),
+    retry: shouldRetry,
+    retryDelay: pollRetryDelay,
     enabled: online,
     refetchInterval: online ? 60_000 : false,
   });
@@ -48,21 +51,13 @@ export function ChargePage() {
     }
   }
 
-  const disabled = amount <= 0 || Boolean(block) || rates.isError || busy;
+  const disabled = amount <= 0 || Boolean(block) || busy;
 
   return (
     <Page
       action={
         <div>
           {block ? <p className="mb-2 text-sm text-warning">{block}</p> : null}
-          {rates.isError ? (
-            <p className="mb-2 text-sm text-danger">
-              Taux indisponible.{" "}
-              <button type="button" className="underline" onClick={() => void rates.refetch()}>
-                Réessayer
-              </button>
-            </p>
-          ) : null}
           {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
           <Button type="button" disabled={disabled} busy={busy} onClick={() => void createInvoice()}>
             Générer le QR

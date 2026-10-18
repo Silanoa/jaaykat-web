@@ -18,7 +18,7 @@ import { getDeviceId } from "../lib/device";
 import { countdown, formatXof } from "../lib/format";
 import { categoryLabel, payMethodLabel, payWithLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
-import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS, pollRetryDelay } from "../lib/resilience";
+import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS, pollRetryDelay, shouldRetry } from "../lib/resilience";
 import { payChoices, payProgress, publicPayPhase } from "../lib/pay-demo";
 import { invoiceSchema, type Invoice, type PayMethod, type PublicInvoice } from "../lib/schemas";
 import { isTerminalInvoice, invoiceStatusLabel } from "../lib/status";
@@ -61,7 +61,8 @@ function ShopCheckout({ slug }: { slug: string }) {
   const shop = useQuery({
     queryKey: ["shop", slug],
     queryFn: () => api.getShop(slug),
-    retry: false,
+    retry: shouldRetry,
+    retryDelay: pollRetryDelay,
   });
 
   async function pay() {
@@ -160,7 +161,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
   const [selected, setSelected] = useState<PayMethod | null>(null);
   const mountedAt = useRef(Date.now());
   const block = postBlockReason("public-invoice", online);
-  const shop = useQuery({ queryKey: ["shop", slug], queryFn: () => api.getShop(slug), retry: false });
+  const shop = useQuery({ queryKey: ["shop", slug], queryFn: () => api.getShop(slug), retry: shouldRetry, retryDelay: pollRetryDelay });
   const queryKey = ["public-invoice", invoiceId];
   const poll = useQuery({
     queryKey,

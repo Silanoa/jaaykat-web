@@ -12,6 +12,7 @@ import { useApi } from "../lib/api-context";
 import { beep, celebratePayment, vibratePayment } from "../lib/celebrate";
 import { countdown, formatSats, formatXof } from "../lib/format";
 import { postBlockReason } from "../lib/offline";
+import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS, pollRetryDelay, shouldRetry } from "../lib/resilience";
 import { invoiceQrPayload, merchantWaitCopy } from "../lib/pay-demo";
 import { isTerminalInvoice } from "../lib/status";
 import { useToast } from "../stores/toast";
@@ -30,10 +31,12 @@ export function InvoicePage() {
   const query = useQuery({
     queryKey: ["invoice", id],
     queryFn: () => api.getInvoice(id),
+    retry: shouldRetry,
+    retryDelay: pollRetryDelay,
     refetchInterval: (state) => {
       const status = state.state.data?.status;
       if (!status || isTerminalInvoice(status)) return false;
-      return 2000;
+      return POLL_INTERVAL_MS;
     },
   });
 
@@ -94,7 +97,7 @@ export function InvoicePage() {
     );
   }
 
-  if (query.isError || !query.data) {
+  if (!query.data) {
     const message = query.error instanceof ApiError ? query.error.message : "La facture est introuvable.";
     return (
       <Page title="Facture">
@@ -104,6 +107,7 @@ export function InvoicePage() {
   }
 
   const invoice = query.data;
+  const pollFailing = query.isError && now - query.dataUpdatedAt > PERSISTENT_FAILURE_MS;
   const qrValue = invoiceQrPayload(invoice);
   const wait = merchantWaitCopy(invoice);
   if (invoice.status === "paid") {
@@ -152,6 +156,14 @@ export function InvoicePage() {
     >
       <BackButton to="/app/charge" label="Retour" />
       <h1 className="mb-2 text-[22px] leading-7 font-semibold">Facture</h1>
+      {pollFailing && waiting ? (
+        <p role="alert" className="mb-2 text-sm text-warning">
+          Connexion instable, dernière mise à jour affichée.{" "}
+          <button type="button" className="min-h-12 underline" onClick={() => void query.refetch()}>
+            Réessayer
+          </button>
+        </p>
+      ) : null}
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-12">
         <div>
           <p className="tabular text-center text-[32px] leading-10 font-bold lg:text-left lg:text-[40px] lg:leading-[48px]">{formatXof(invoice.amountXof)}</p>

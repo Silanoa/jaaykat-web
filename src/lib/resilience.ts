@@ -15,3 +15,7 @@ export function isTransientError(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 408 || error.status === 429 || error.status >= 500;
   return true;
 }
+
+export function shouldRetry(failureCount: number, error: unknown): boolean {
+  return isTransientError(error) && failureCount < 3;
+}
