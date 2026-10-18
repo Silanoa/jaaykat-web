@@ -101,7 +101,7 @@ describe("écran Solde : retirable ou démonstration", () => {
     const demo = (await screen.findByText("Chiffre d'affaires de démonstration")).closest("section") as HTMLElement;
     expect(demo).toHaveTextContent(/187\s500\sF/);
     expect(demo).toHaveTextContent("74 ventes simulées");
-    expect(demo).toHaveTextContent("Non retirable");
+    expect(demo).toHaveTextContent("non retirables");
     expect(screen.getByText("Pas encore de ventes retirables.")).toBeInTheDocument();
   });
 

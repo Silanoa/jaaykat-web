@@ -108,12 +108,12 @@ describe("écran Score : attestation", () => {
 
   it("signale les données de démonstration et affiche les règles de calcul", async () => {
     renderAt("/app/score", harness(score({ demo: true })).fetchImpl, true);
-    expect(await screen.findByText(/Données de démonstration/)).toBeInTheDocument();
+    expect(await screen.findByText(/Mode démo : ce score inclut un historique/)).toBeInTheDocument();
     const rules = await screen.findByRole("region", { name: "Règles du score" });
     expect(rules).toHaveTextContent("90 derniers jours");
     expect(rules).toHaveTextContent("20 ventes payées");
     expect(rules).toHaveTextContent("14 jours");
-    expect(rules).toHaveTextContent("ventes payées uniquement");
+    expect(rules).toHaveTextContent("ventes payées des 90 derniers jours");
   });
 });
 
@@ -171,16 +171,15 @@ describe("attestation publique", () => {
     expect(limits).toHaveTextContent("garantie de crédit");
     expect(limits).toHaveTextContent("identité");
     expect(await screen.findByRole("img", { name: /QR/ })).toBeInTheDocument();
-    expect(screen.queryByText(/Démonstration/)).toBeNull();
-    expect(screen.queryByText(/réseau de test/i)).toBeNull();
+    expect(screen.queryByText(/Démo : historique de ventes simulé/)).toBeNull();
+    expect(screen.queryByText(/paiements de test/i)).toBeNull();
     expect(document.body.textContent).not.toMatch(/\+221|77\d{7}|PIN/);
   });
 
   it("étiquette la démonstration et le réseau de test", async () => {
     renderAt("/s/tok", publicHarness(attestation({ demo: true, environment: "sandbox" })));
-    expect(await screen.findByText(/Démonstration/)).toBeInTheDocument();
-    expect(screen.getByText(/historique de ventes simulé/)).toBeInTheDocument();
-    expect(screen.getByText(/Réseau de test Bitnob \(sandbox\)/)).toBeInTheDocument();
+    expect(await screen.findByText(/Démo : historique de ventes simulé/)).toBeInTheDocument();
+    expect(screen.getByText(/Mode démo : paiements de test/)).toBeInTheDocument();
     const atteste = screen.getByRole("region", { name: "Ce que cette attestation atteste" });
     expect(atteste).toHaveTextContent("Rien de réel");
     expect(atteste).not.toHaveTextContent("paiements Lightning ont été enregistrés");
@@ -188,7 +187,7 @@ describe("attestation publique", () => {
 
   it("ne présente pas comme réels des paiements dont l'environnement n'a pas pu être vérifié", async () => {
     renderAt("/s/tok", publicHarness(attestation({ environment: "unknown" })));
-    expect(await screen.findByText(/Environnement Bitnob non vérifié à l'émission/)).toBeInTheDocument();
+    expect(await screen.findByText(/Environnement non vérifié/)).toBeInTheDocument();
   });
 
   it("signale une attestation expirée", async () => {

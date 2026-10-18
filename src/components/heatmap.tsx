@@ -33,7 +33,6 @@ export function Heatmap({ cells }: { cells: Cell[] }) {
           ))}
         </div>
       </div>
-      <p className="mt-2 text-sm text-muted">Plus la case est foncée, plus le montant encaissé est élevé.</p>
       {selected ? (
         <p role="status" className="mt-2 rounded-xl bg-surface px-3 py-2 text-sm">
           {DAYS[selected.weekday]} {selected.hour}h · {selected.salesCount} vente{selected.salesCount > 1 ? "s" : ""} ·{" "}

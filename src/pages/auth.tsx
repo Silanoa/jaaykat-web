@@ -52,14 +52,14 @@ export function InstallPage() {
           </div>
         }
       >
-        <p>Installez Jaaykat pour l'ouvrir comme une application, en plein écran.</p>
+        <p>Installez Jaaykat sur votre téléphone.</p>
         {isIos() ? (
           <p className="mt-4 rounded-xl bg-surface p-4 text-sm">
             Sur iPhone : Partager, puis « Sur l'écran d'accueil ».
           </p>
         ) : (
           <p className="mt-4 text-sm text-muted">
-            Sur Android, le bouton installe l'application. Sinon : menu du navigateur, puis « Ajouter à l'écran d'accueil ».
+            Sinon : menu du navigateur, puis « Ajouter à l'écran d'accueil ».
           </p>
         )}
         <Link to="/app/login" className="mt-6 inline-flex min-h-12 items-center text-primary">
@@ -182,7 +182,7 @@ export function RegisterPage() {
             </div>
           }
         >
-          <p className="mb-4 text-sm text-muted">Étape 1 sur 2. Aucun envoi pour l'instant.</p>
+          <p className="mb-4 text-sm text-muted">Étape 1 sur 2.</p>
           <div className="flex flex-col gap-4">
             <Field id="shopName" label="Nom de la boutique" error={fields.shopName}>
               <input
@@ -227,7 +227,7 @@ export function RegisterPage() {
             <Field
               id="phone"
               label="Téléphone"
-              hint="Votre numéro sert d'identifiant. Aucun SMS n'est envoyé."
+              hint="Votre numéro sert d'identifiant."
               error={fields.phone}
             >
               <div className="flex gap-2">
@@ -265,7 +265,7 @@ export function RegisterPage() {
     <AuthShell>
       <Page title="Code PIN">
         <p className="mb-4 text-sm">
-          Ce code protège vos ventes et vos retraits. Notez-le : il ne peut pas être récupéré par SMS.
+          Ce code protège vos ventes et vos retraits. Notez-le, il ne peut pas être récupéré.
         </p>
         <p className="mb-2 text-sm font-medium">
           {phase === "submit"
@@ -387,8 +387,7 @@ export function ForgotPage() {
         }
       >
         <p>
-          Sans SMS, Jaaykat ne peut pas vérifier votre identité à distance. Pendant la démo, l'équipe réinitialise
-          votre code sur place.
+          Le code ne peut pas être récupéré à distance. Pendant la démo, l'équipe le réinitialise sur place.
         </p>
       </Page>
     </AuthShell>

@@ -62,15 +62,12 @@ export function UniversalQrPage() {
         <div className="my-4">
           <QrImage value={url || null} label="QR de la page de paiement" />
         </div>
-        <p>Scannez pour payer en Lightning</p>
+        <p>Scannez pour payer</p>
         <p className="mt-2 break-all text-sm text-muted">{url}</p>
       </article>
       <button type="button" className="mt-4 min-h-12 text-primary" onClick={() => void copyLink()}>
         Copier le lien
       </button>
-      <p className="mt-2 text-sm text-muted">
-        Ce QR ouvre une page web. Il ne remplace pas une facture Lightning à usage unique.
-      </p>
     </Page>
   );
 }

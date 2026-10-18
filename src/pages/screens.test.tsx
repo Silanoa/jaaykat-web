@@ -104,7 +104,7 @@ describe("états des écrans", () => {
       true,
     );
     expect(await screen.findByText("En attente du paiement")).toBeInTheDocument();
-    expect(screen.getByText("Mode démo · sandbox, aucune somme réelle")).toBeInTheDocument();
+    expect(screen.getByText("Mode démo")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Nouvelle vente" })).not.toBeInTheDocument();
   });
 
@@ -168,7 +168,7 @@ describe("états des écrans", () => {
       }
       return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
     });
-    expect(await screen.findByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
+    expect(await screen.findByText("Paiement simulé, aucune somme débitée")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Awa Beauté" })).toBeInTheDocument();
     expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
     for (const name of [/^Portefeuille Lightning/, /^Wave/, /^Orange Money/, /^Yas/, /^Expresso/]) {
@@ -191,7 +191,7 @@ describe("états des écrans", () => {
       if (path === "/api/health") return jsonResponse(200, { ok: true, bitnob: true, demoPayMode: "manual" });
       return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
     });
-    expect(await screen.findByText(/vous choisissez Wave, Orange Money, Yas ou Expresso/)).toBeInTheDocument();
+    expect(await screen.findByText(/choisissez Wave, Orange Money, Yas ou Expresso/)).toBeInTheDocument();
     expect(screen.queryByText(/toute seule/)).not.toBeInTheDocument();
     expect(screen.queryByText(/portefeuille/)).not.toBeInTheDocument();
   });
@@ -203,8 +203,8 @@ describe("états des écrans", () => {
       if (path === "/api/health") return jsonResponse(200, { ok: true, bitnob: true, demoPayMode: "auto" });
       return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
     });
-    expect(await screen.findByText(/La confirmation se fait toute seule/)).toBeInTheDocument();
-    expect(screen.getByText(/application de portefeuille/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ce paiement passe par Bitcoin Lightning/)).toBeInTheDocument();
+    expect(screen.getByText(/il faut un portefeuille Lightning/)).toBeInTheDocument();
   });
 
   it("après la saisie du montant, ouvre le même choix en mode démo", async () => {
@@ -252,7 +252,7 @@ describe("états des écrans", () => {
     }
     await user.click(screen.getByRole("button", { name: "Payer" }));
     expect(await screen.findByRole("button", { name: /^Wave/ })).toBeInTheDocument();
-    expect(screen.getByText("Démo : paiement simulé, aucune somme réelle")).toBeInTheDocument();
+    expect(screen.getByText("Paiement simulé, aucune somme débitée")).toBeInTheDocument();
   });
 
   it("propose le portefeuille Lightning avec facture, copie et lien lightning:", async () => {
@@ -287,7 +287,7 @@ describe("états des écrans", () => {
       return jsonResponse(404, { error: "NOT_FOUND", message: "Introuvable" });
     });
     await user.click(await screen.findByRole("button", { name: /^Portefeuille Lightning/ }));
-    expect(screen.getByText(/le réseau de test ne permet pas de payer réellement/)).toBeInTheDocument();
+    expect(screen.getByText(/Vous payez la facture Lightning avec votre portefeuille/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Confirmer le paiement de 2\s600\sF/ }));
     const open = await screen.findByRole("link", { name: "Ouvrir mon portefeuille" });
     expect(open).toHaveAttribute("href", "lightning:lntb26u1pexample");
@@ -328,7 +328,7 @@ describe("états des écrans", () => {
     expect(screen.getByRole("button", { name: "Nouvelle vente" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Voir la vente" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Copier la preuve" })).toBeEnabled();
-    expect(screen.getByText("démo · sandbox".replace("d", "D"))).toBeInTheDocument();
+    expect(screen.getByText("Paiement simulé")).toBeInTheDocument();
     expect(screen.getByText(/2\s500\sF/)).toBeInTheDocument();
     expect(screen.getByText(/4\s230 sats/)).toBeInTheDocument();
   });

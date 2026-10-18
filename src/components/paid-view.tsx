@@ -62,7 +62,7 @@ export function PaidView({ title, amountXof, amountSats, paidAt, subject, subjec
         {primary}
         {secondary}
       </div>
-      <p className="mt-6 text-xs text-subtle">Démo · sandbox</p>
+      <p className="mt-6 text-xs text-subtle">Paiement simulé</p>
     </section>
   );
 }

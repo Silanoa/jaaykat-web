@@ -138,7 +138,7 @@ function ShopCheckout({ slug }: { slug: string }) {
             onChange={(event) => setPayerName(event.target.value)}
           />
         </label>
-        <p className="mt-2 text-sm text-muted">Ce champ est facultatif. Il sert seulement à reconnaître un client fidèle.</p>
+        <p className="mt-2 text-sm text-muted">Facultatif. Sert à reconnaître les clients fidèles.</p>
         <Link to={`/p/${slug}?aide=1`} className="mt-4 inline-flex min-h-12 items-center text-primary">
           Comment payer ?
         </Link>
@@ -148,7 +148,7 @@ function ShopCheckout({ slug }: { slug: string }) {
 }
 
 function DemoNote() {
-  return <p className="mt-6 text-center text-xs text-subtle">Démo : paiement simulé, aucune somme réelle</p>;
+  return <p className="mt-6 text-center text-xs text-subtle">Paiement simulé, aucune somme débitée</p>;
 }
 
 function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
@@ -344,8 +344,8 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
           <p className="mt-4 text-sm font-medium">Vous payez avec {payWithLabel(selected)}.</p>
           <p className="mt-2 text-sm text-muted">
             {lightning
-              ? "Vous payez la facture Lightning avec votre portefeuille. En démo sandbox, le règlement est simulé : le réseau de test ne permet pas de payer réellement."
-              : "Démo : le paiement est simulé, aucune somme réelle n'est débitée."}
+              ? "Vous payez la facture Lightning avec votre portefeuille."
+              : "Mode démo : aucune somme débitée."}
           </p>
           <DemoNote />
         </Page>
@@ -389,8 +389,8 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
                 bolt11={bolt11}
                 note={
                   demoPayment
-                    ? "Démo sandbox : le règlement est simulé, le réseau de test ne permet pas de payer réellement."
-                    : "Payez cette facture avec n'importe quel portefeuille Lightning."
+                    ? "Mode démo : règlement simulé."
+                    : "Payez cette facture avec un portefeuille Lightning."
                 }
               />
             </div>
@@ -402,7 +402,7 @@ function PaymentFlow({ slug, invoiceId }: { slug: string; invoiceId: string }) {
           ) : null}
           {demoPayment ? null : (
             <p className="mt-2 text-center text-xs text-subtle">
-              Démo sandbox : la confirmation se fait automatiquement, sans paiement réel.
+              Mode démo : confirmation automatique.
             </p>
           )}
           {payStart.failed ? (
@@ -443,17 +443,12 @@ function Help({ slug }: { slug: string }) {
       >
         {simulated ? (
           <p>
-            Démo : aucune somme réelle n'est débitée. Après avoir scanné le QR, vous choisissez Wave, Orange Money,
-            Yas ou Expresso, puis le paiement est simulé.
+            Mode démo : aucune somme débitée. Scannez le QR, puis choisissez Wave, Orange Money, Yas ou Expresso.
           </p>
         ) : (
           <>
             <p>
-              Ce paiement passe par le réseau Bitcoin Lightning. Hors démo, il faut une application de portefeuille
-              Lightning. Un compte mobile money ne permet pas de payer cette facture.
-            </p>
-            <p className="mt-3">
-              Pendant la démo, aucune somme réelle n'est débitée. La confirmation se fait toute seule.
+              Ce paiement passe par Bitcoin Lightning : il faut un portefeuille Lightning. Un compte mobile money ne peut pas le payer.
             </p>
           </>
         )}

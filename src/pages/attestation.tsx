@@ -13,15 +13,15 @@ import type { Attestation } from "../lib/schemas";
 function environmentNote(environment: string): string | null {
   if (environment === "live" || environment === "production") return null;
   if (environment === "sandbox") {
-    return "Réseau de test Bitnob (sandbox) : les paiements comptés ici sont des paiements de test, aucun argent réel n'a circulé.";
+    return "Mode démo : paiements de test, aucun argent réel.";
   }
   if (environment === "mock") {
-    return "Simulation locale : les paiements comptés ici sont simulés, aucun argent réel n'a circulé.";
+    return "Mode démo : paiements simulés, aucun argent réel.";
   }
   if (environment === "unknown") {
-    return "Environnement Bitnob non vérifié à l'émission : ne pas supposer que ces paiements sont réels.";
+    return "Environnement non vérifié : ne pas supposer que ces paiements sont réels.";
   }
-  return `Environnement de test (${environment}) : aucun argent réel n'a circulé.`;
+  return "Environnement de test : aucun argent réel.";
 }
 
 function statusLine(data: Attestation): string {
@@ -37,7 +37,7 @@ function Details({ data }: { data: Attestation }) {
     <>
       {data.demo ? (
         <p className="mt-3 rounded-xl bg-warning-bg px-3 py-2 text-sm font-medium text-warning">
-          Démonstration : calculée sur un historique de ventes simulé, sans valeur réelle.
+          Démo : historique de ventes simulé, sans valeur réelle.
         </p>
       ) : null}
       {note ? <p className="mt-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">{note}</p> : null}
@@ -62,29 +62,28 @@ function Details({ data }: { data: Attestation }) {
         </p>
         <p className="font-semibold">Bande {data.band ?? "—"}</p>
         <p className="mt-2 text-sm text-muted">
-          Ce score de 0 à 100 résume la régularité des encaissements de la boutique sur les {data.windowDays} derniers jours. Il n'est
-          ni une note de solvabilité ni une garantie de crédit.
+          Régularité des encaissements sur les {data.windowDays} derniers jours. Ni note de solvabilité, ni garantie de crédit.
         </p>
       </article>
       <section aria-label="Ce que cette attestation atteste" className="mt-4">
         <h2 className="font-semibold">Ce que cette attestation atteste</h2>
         <ul className="mt-2 list-disc pl-5 text-sm">
           {data.demo ? (
-            <li>Rien de réel : les ventes comptées viennent d'un historique simulé, pas de paiements Lightning.</li>
+            <li>Rien de réel : historique de ventes simulé.</li>
           ) : (
             <li>
               Que {count} paiement{count > 1 ? "s" : ""} Lightning {count > 1 ? "ont" : "a"} été enregistré{count > 1 ? "s" : ""} comme
               payé{count > 1 ? "s" : ""} par Jaaykat, après confirmation de Bitnob, sur ce compte de boutique.
             </li>
           )}
-          <li>Que le score a été calculé à la date d'émission avec les règles ci-dessous.</li>
+          <li>Un score calculé à la date d'émission.</li>
         </ul>
       </section>
       <section aria-label="Ce qu'elle n'atteste pas" className="mt-4">
         <h2 className="font-semibold">Ce qu'elle n'atteste pas</h2>
         <ul className="mt-2 list-disc pl-5 text-sm">
-          <li>L'identité du commerçant : le compte est ouvert sans vérification d'identité.</li>
-          <li>Sa solvabilité ou sa capacité à rembourser. Ce n'est pas une garantie de crédit.</li>
+          <li>L'identité du commerçant : le compte est ouvert sans vérification.</li>
+          <li>Sa solvabilité. Ce n'est pas une garantie de crédit.</li>
           <li>Les ventes payées en espèces ou en dehors de Jaaykat.</li>
         </ul>
       </section>
@@ -103,7 +102,7 @@ function Details({ data }: { data: Attestation }) {
       <section aria-label="Vérification" className="mt-4 rounded-xl bg-surface p-4">
         <h2 className="font-semibold">Vérifier en ligne</h2>
         <p className="mt-1 text-sm text-muted">
-          Ce QR code ouvre cette page, qui indique si l'attestation est toujours valable.
+          Scannez pour vérifier que l'attestation est valable.
         </p>
         <QrImage
           value={window.location.href}

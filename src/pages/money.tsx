@@ -72,7 +72,7 @@ export function BalancePage() {
           <p className="text-sm text-muted">{formatSats(query.data.balanceSats)}</p>
           {query.data.balanceXof === 0 ? <p className="mt-2 text-sm">Pas encore de ventes retirables.</p> : null}
           <p className="mt-3 text-sm text-muted">
-            Ventes payées en direct moins vos retraits. Ce solde est le ledger interne, pas un compte mobile money.
+            Ventes payées moins vos retraits.
           </p>
           {query.data.demoSalesCount > 0 ? (
             <section aria-labelledby="demo-revenue" className="mt-4 rounded-xl bg-warning-bg px-4 py-3">
@@ -81,7 +81,7 @@ export function BalancePage() {
               </h2>
               <p className="tabular text-lg font-bold">{formatXof(query.data.demoRevenueXof)}</p>
               <p className="text-sm">
-                {query.data.demoSalesCount} ventes simulées. Non retirable, exclu du solde retirable ci-dessus.
+                {query.data.demoSalesCount} ventes simulées, non retirables.
               </p>
             </section>
           ) : null}
@@ -165,7 +165,7 @@ export function PayoutFormPage() {
         Solde retirable :{" "}
         <strong className="tabular">{balance.data ? formatXof(balance.data.balanceXof) : "…"}</strong>
       </p>
-      <p className="mb-2 text-sm text-muted">Entre 100 et 200 000 F. Simulation sandbox : aucun argent réel.</p>
+      <p className="mb-2 text-sm text-muted">Entre 100 et 200 000 F.</p>
       <AmountReadout value={amount} />
       {amountError ? <p className="text-center text-sm text-danger">{amountError}</p> : null}
       <div className="my-3">
@@ -194,7 +194,6 @@ export function PayoutFormPage() {
         </p>
         <p className="text-sm">{phoneOk ?? "Numéro à saisir"}</p>
         <p className="text-sm">{name.trim() || "Titulaire à saisir"}</p>
-        <p className="mt-3 text-sm text-muted">Le montant reçu et les frais viennent du devis, pas d'un calcul dans l'application.</p>
       </aside>
       </div>
     </Page>
@@ -252,7 +251,7 @@ export function PayoutConfirmPage() {
         </div>
       }
     >
-      <p className="text-sm text-info">Simulation, aucun argent réel.</p>
+      <p className="text-sm text-info">Mode démo</p>
       <div className="mt-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
         <div>
           <p className="text-sm text-muted">Montant envoyé</p>
@@ -308,7 +307,7 @@ export function PayoutStatusPage() {
         </Button>
       }
     >
-      <p className="text-sm text-muted">Simulation, aucun argent réel.</p>
+      <p className="text-sm text-muted">Mode démo</p>
       {query.isLoading ? <Skeleton className="mt-4 h-24" /> : null}
       {query.isError && query.data && now - query.dataUpdatedAt > PERSISTENT_FAILURE_MS ? (
         <p role="alert" className="mb-2 text-sm text-warning">
@@ -375,7 +374,7 @@ export function SettingsPage() {
       <p className="text-sm text-muted">{merchant?.category}</p>
       <p className="mt-2 text-sm">Numéro {user?.phoneMasked ?? "—"}</p>
       <p className="mt-4 text-sm">Langue : français. Wolof : bientôt.</p>
-      <p className="mt-2 text-sm">Mode démo : sandbox. Les paiements sont simulés.</p>
+      <p className="mt-2 text-sm">Mode démo</p>
       <h2 className="mt-6 font-semibold">Montants rapides</h2>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {amounts.map((value, index) => (
@@ -446,11 +445,7 @@ export function SystemPage() {
       {query.data ? (
         <div className="flex flex-col gap-4">
           <p>Environnement : {query.data.env}</p>
-          {query.data.seedHistory !== undefined ? (
-            <p>Historique simulé : {query.data.seedHistory ? "oui" : "non"}</p>
-          ) : (
-            <p className="text-sm text-muted">L'historique seed est marqué sur chaque vente, pas dans ce journal.</p>
-          )}
+          {query.data.seedHistory !== undefined ? <p>Historique simulé : {query.data.seedHistory ? "oui" : "non"}</p> : null}
           <section>
             <h2 className="font-semibold">Soldes plateforme</h2>
             <BalanceList value={query.data.platformBalances} />

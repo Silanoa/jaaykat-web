@@ -109,7 +109,7 @@ for (const viewport of VIEWPORTS) {
     await expect(page.getByText("71 / 100")).toBeVisible();
     await expect(page.getByRole("region", { name: "Ce qu'elle n'atteste pas" })).toBeVisible();
     await expect(page.getByRole("img", { name: /QR code de vérification/ })).toBeVisible();
-    await expect(page.getByText(/Réseau de test Bitnob/)).toBeVisible();
+    await expect(page.getByText(/Mode démo : paiements de test/)).toBeVisible();
     expect(await page.locator("body").innerText()).not.toMatch(/\+221|\b77\d{7}\b/);
     await noHorizontalOverflow(page);
     await settled(page);
@@ -121,7 +121,7 @@ test("attestation de démonstration 390 : étiquetée", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 2000 });
   await override(page, "/api/public/shares/tok", attestationBody({ demo: true, shopName: "Awa Beauté", environment: "mock" }));
   await page.goto("/s/tok");
-  await expect(page.getByText(/Démonstration : calculée sur un historique de ventes simulé/)).toBeVisible();
+  await expect(page.getByText(/Démo : historique de ventes simulé, sans valeur réelle/)).toBeVisible();
   await settled(page);
     await page.screenshot({ path: `${shots}/attestation-demo-390.png`, fullPage: true });
 });
@@ -152,7 +152,7 @@ test("solde 390 : solde retirable et chiffre d'affaires de démonstration sépar
   await page.goto("/app/balance");
   await expect(page.getByText("Solde retirable", { exact: true })).toBeVisible();
   await expect(page.getByText("Chiffre d'affaires de démonstration")).toBeVisible();
-  await expect(page.getByText(/Non retirable/)).toBeVisible();
+  await expect(page.getByText(/non retirables/)).toBeVisible();
   await settled(page);
     await page.screenshot({ path: `${shots}/solde-demo-390.png`, fullPage: true });
 });

@@ -274,7 +274,7 @@ export function DashboardPage() {
         <div className="jk-fade-in flex flex-col gap-4">
           {data.demo ? (
             <p className="rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
-              Données de démonstration : l'historique simulé est inclus dans ces chiffres. Il n'est pas retirable.
+              Mode démo : ces chiffres incluent un historique simulé.
             </p>
           ) : null}
           {data.kpis.salesCount < 5 ? (
@@ -344,14 +344,12 @@ export function DashboardPage() {
                 <div className="mt-3 grid gap-4">
                   <div>
                     <ScoreGauge score={score.data.score} band={score.data.band} />
-                    <p className="text-center text-sm text-muted">Score indicatif, non recalculé ici.</p>
                     <Link to="/app/score" className="mt-2 inline-flex min-h-12 items-center font-semibold text-primary">
                       Voir le détail
                     </Link>
                   </div>
                   <article className="rounded-xl bg-success-bg p-4">
                     <h3 className="font-semibold">Attestation</h3>
-                    <p className="mt-1 text-sm">Le lien reprend le score renvoyé par le serveur.</p>
                     {!score.data.eligible ? (
                       <p id="dash-attest-why" className="mt-2 text-sm text-warning">
                         {eligibilityText(score.data.remaining)}
@@ -457,7 +455,7 @@ export function ScorePage() {
           <div>
           {data.demo ? (
             <p className="mb-3 rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">
-              Données de démonstration : ce score inclut un historique de ventes simulé. Il ne reflète pas une activité réelle.
+              Mode démo : ce score inclut un historique de ventes simulé.
             </p>
           ) : null}
           {!data.eligible ? (
@@ -472,7 +470,6 @@ export function ScorePage() {
           {data.computedAt ? <p className="text-center text-sm text-muted">Calculé {formatWhen(data.computedAt)}</p> : null}
           <article className="mt-4 hidden rounded-xl bg-surface p-4 lg:block">
             <h2 className="font-semibold">Attestation</h2>
-            <p className="mt-1 text-sm text-muted">Lien en lecture seule. Le score affiché est celui du serveur.</p>
             {!data.eligible ? (
               <p id="attest-why-desktop" className="mt-2 text-sm text-warning">
                 {eligibilityText(data.remaining)}
@@ -553,12 +550,12 @@ export function ScorePage() {
             <h2 className="font-semibold">Règles du score</h2>
             <ul className="mt-2 list-disc pl-5 text-sm text-muted">
               <li>
-                Calculé sur les ventes payées uniquement, confirmées par Bitnob, sur les {data.windowDays} derniers jours. Les factures
-                expirées pèsent seulement sur la qualité d'encaissement.
+                Calculé sur les ventes payées des {data.windowDays} derniers jours. Les factures expirées ne pèsent que sur la qualité
+                d'encaissement.
               </li>
               <li>
                 Éligibilité : {data.thresholds.days} jours depuis la première vente payée et {data.thresholds.sales} ventes payées.
-                Avant, il n'y a ni score ni attestation.
+                Avant, ni score ni attestation.
               </li>
               <li>Score de 0 à 100. Bande A à partir de 75, B de 60 à 74, C de 45 à 59, D en dessous de 45.</li>
               <li>Indicatif : ce n'est ni une note de solvabilité ni une garantie de crédit.</li>
@@ -572,7 +569,7 @@ export function ScorePage() {
           <div className="w-full max-w-[480px] rounded-t-[20px] bg-surface p-4 pb-8">
             <h2 className="text-lg font-semibold">{detail.label}</h2>
             <p className="mt-2">{detail.help}</p>
-            <p className="mt-2 text-sm text-muted">Poids affiché : {detail.weight}. La valeur vient du serveur.</p>
+            <p className="mt-2 text-sm text-muted">Poids : {detail.weight}.</p>
             <div className="mt-4">
               <Button type="button" variant="secondary" onClick={() => setOpen(null)}>
                 Fermer

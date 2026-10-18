@@ -189,7 +189,7 @@ export function InvoicePage() {
           ) : null}
           {wait.autoSettle ? (
             <p className="mt-3 text-center text-sm text-muted lg:text-left">
-              Démo sandbox : confirmation automatique en quelques secondes.
+              Mode démo : confirmation automatique.
             </p>
           ) : null}
           <div className="mt-4 grid grid-cols-2 gap-2">

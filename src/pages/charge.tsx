@@ -105,15 +105,12 @@ export function ChargePage() {
       </div>
       <aside className="mt-6 hidden rounded-2xl bg-surface p-6 lg:block">
         <h2 className="text-lg font-semibold">QR permanent</h2>
-        <p className="mt-1 text-sm text-muted">
-          Ce QR ouvre la page client. Après « Générer le QR », le QR de la vente et son statut s'affichent en grand à droite.
-        </p>
         {merchant?.qrUrl ? (
           <div className="mt-4">
             <QrImage value={merchant.qrUrl} label="QR permanent" className="mx-auto aspect-square w-full max-w-[360px]" />
           </div>
         ) : (
-          <p className="mt-4 text-sm">Aucun QR permanent renvoyé par le compte.</p>
+          <p className="mt-4 text-sm">QR permanent indisponible.</p>
         )}
       </aside>
       </div>

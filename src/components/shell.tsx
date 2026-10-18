@@ -27,7 +27,7 @@ export function SessionListener() {
 
 export function SandboxBanner() {
   return (
-    <p className="mb-3 bg-accent/20 px-4 pt-[max(4px,env(safe-area-inset-top))] pb-1 text-center text-xs font-medium text-ink">Mode démo · sandbox, aucune somme réelle</p>
+    <p className="mb-3 bg-accent/20 px-4 pt-[max(4px,env(safe-area-inset-top))] pb-1 text-center text-xs font-medium text-ink">Mode démo</p>
   );
 }
 
@@ -94,10 +94,10 @@ export function FocusShell() {
 }
 
 const BRAND_POINTS = [
-  "Encaisser : un QR, le client choisit son moyen de paiement.",
-  "Décider : ventes, heures de pointe et clients fidèles.",
-  "Prouver : un score de régularité à partager.",
-  "Retirer : vers Wave, Orange Money, Yas ou Expresso.",
+  "Encaissez par QR code.",
+  "Suivez vos ventes et vos heures de pointe.",
+  "Partagez un score de régularité.",
+  "Retirez vers Wave, Orange Money, Yas ou Expresso.",
 ];
 
 function BrandPanel() {
@@ -119,7 +119,7 @@ function BrandPanel() {
           ))}
         </ul>
       </div>
-      <p className="text-sm text-white/80">Démo Code &amp; Chain Dakar 2026 · paiement simulé, aucune somme réelle.</p>
+      <p className="text-sm text-white/80">Mode démo</p>
     </aside>
   );
 }
