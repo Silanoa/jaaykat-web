@@ -27,6 +27,7 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 - Page boutique publique sans session.
 - Hors ligne : lecture du tableau en cache, encaissement bloqué avec message.
 - Erreur réseau ou API : état d'erreur avec bouton « Réessayer ».
+- Parcours client : après la confirmation, l'écran Paiement en cours s'affiche tout de suite. Les erreurs transitoires de `/pay` et du polling (429, 5xx, coupure) sont réessayées sans rien afficher ; le message avec bouton « Réessayer » n'apparaît qu'après 15 s d'échec persistant.
 
 ## Fraîcheur des données et flashs
 
@@ -50,7 +51,7 @@ Exceptions assumées de l'audit : les cases de la carte des heures de pointe (`d
 
 ## Limites connues
 
-- Sandbox Bitnob : aucune simulation de paiement d'une facture Lightning. En mode démo (`DEMO_PAY_MODE=manual`), le règlement est déclenché par l'auto-settle de la facture Bitnob créée au moment du choix du moyen. Le choix Wave, Orange Money, Free Money ou Expresso est un libellé de démonstration, sans écran d'opérateur ni logo.
+- Sandbox Bitnob : aucune simulation de paiement d'une facture Lightning. En mode démo (`DEMO_PAY_MODE=manual`), le règlement est déclenché par l'auto-settle de la facture Bitnob créée au moment du choix du moyen. Le choix Wave, Orange Money, Free Money ou Expresso est un libellé de démonstration, sans écran d'opérateur. Les vignettes identifient seulement le moyen choisi : logo Wave (icône officielle du site) et logo Orange, vignettes aux couleurs de la marque pour Free Money (devenu Mixx by Yas), Expresso et le portefeuille Lightning, faute de logo officiel libre.
 - Le portefeuille Lightning affiche un vrai bolt11 sandbox ; un portefeuille mainnet ne peut pas le payer.
 - Pas de page 404 dédiée : une adresse inconnue renvoie vers `/app`.
 - Le chargement initial de la page client demande un fichier de plus (route à la demande) ; sur réseau lent, un fond uni s'affiche pendant ce temps.
