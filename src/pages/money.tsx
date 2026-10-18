@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AmountPad, AmountReadout } from "../components/pads";
+import { NetworkPicker } from "../components/network-picker";
+import { PayLogo } from "../components/pay-logo";
 import { BackButton, ShopHeader } from "../components/shell";
 import { Button, ErrorState, Field, Page, Skeleton } from "../components/ui";
 import { useNow } from "../hooks/useNow";
@@ -9,7 +11,7 @@ import { useOnline } from "../hooks/useOnline";
 import { ApiError } from "../lib/api";
 import { useApi } from "../lib/api-context";
 import { countdown, formatSats, formatWhen, formatXof } from "../lib/format";
-import { networkLabel, payoutStatusLabel } from "../lib/labels";
+import { networkLabel, networkLogoMethod, payoutStatusLabel } from "../lib/labels";
 import { postBlockReason } from "../lib/offline";
 import { PERSISTENT_FAILURE_MS, POLL_INTERVAL_MS } from "../lib/resilience";
 import { signOut } from "../lib/sign-out";
@@ -19,7 +21,6 @@ import { normalizePhone, payoutAmountError } from "../lib/validation";
 import { useSession } from "../stores/session";
 import { useToast } from "../stores/toast";
 
-const NETWORKS: PayoutNetwork[] = ["wave", "orange", "free", "expresso"];
 const inputClass = "min-h-12 w-full rounded-lg border border-black/15 bg-surface px-3";
 
 function isTerminalPayout(status: string): boolean {
@@ -66,14 +67,26 @@ export function BalancePage() {
       ) : null}
       {query.data ? (
         <div>
+          <p className="text-sm font-medium text-muted">Solde retirable</p>
           {query.data.balanceXof === 0 ? (
-            <p className="mb-3 text-sm">Pas encore de ventes retirables.</p>
+            <p className="mb-1 text-sm">Pas encore de ventes retirables.</p>
           ) : null}
           <p className="tabular text-[40px] leading-[48px] font-bold">{formatXof(query.data.balanceXof)}</p>
           <p className="text-sm text-muted">{formatSats(query.data.balanceSats)}</p>
           <p className="mt-3 text-sm text-muted">
-            Les ventes de l'historique simulé ne sont pas incluses. Ce solde est le ledger interne, pas un compte mobile money.
+            Ventes payées en direct moins vos retraits. Ce solde est le ledger interne, pas un compte mobile money.
           </p>
+          {query.data.demoSalesCount > 0 ? (
+            <section aria-labelledby="demo-revenue" className="mt-4 rounded-xl bg-warning-bg px-4 py-3">
+              <h2 id="demo-revenue" className="text-sm font-semibold text-warning">
+                Chiffre d'affaires de démonstration
+              </h2>
+              <p className="tabular text-lg font-bold">{formatXof(query.data.demoRevenueXof)}</p>
+              <p className="text-sm">
+                {query.data.demoSalesCount} ventes simulées. Non retirable, exclu du solde retirable ci-dessus.
+              </p>
+            </section>
+          ) : null}
           <h2 className="mt-6 font-semibold">Derniers retraits</h2>
           {query.data.lastPayouts.length === 0 ? (
             <p className="mt-2 text-sm text-muted">Aucun retrait.</p>
@@ -150,23 +163,17 @@ export function PayoutFormPage() {
       <h1 className="mb-2 text-[28px] font-bold">Retrait</h1>
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
       <div>
+      <p className="mb-1 text-sm">
+        Solde retirable :{" "}
+        <strong className="tabular">{balance.data ? formatXof(balance.data.balanceXof) : "…"}</strong>
+      </p>
       <p className="mb-2 text-sm text-muted">Entre 100 et 200 000 F. Simulation sandbox : aucun argent réel.</p>
       <AmountReadout value={amount} />
       {amountError ? <p className="text-center text-sm text-danger">{amountError}</p> : null}
       <div className="my-3">
         <AmountPad value={amount} onChange={setAmount} />
       </div>
-      <fieldset className="mb-3">
-        <legend className="mb-2 text-sm font-medium">Réseau</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {NETWORKS.map((item) => (
-            <label key={item} className={`flex min-h-12 items-center gap-2 rounded-xl px-3 ${network === item ? "bg-primary text-white" : "bg-surface"}`}>
-              <input type="radio" name="network" checked={network === item} onChange={() => setNetwork(item)} />
-              {networkLabel(item)}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <NetworkPicker value={network} onChange={setNetwork} />
       <Field id="payout-phone" label="Numéro" hint="9 chiffres commençant par 7">
         <div className="flex gap-2">
           <span className="inline-flex min-h-12 items-center rounded-lg bg-surface px-3">+221</span>
@@ -183,7 +190,10 @@ export function PayoutFormPage() {
         <h2 className="text-lg font-semibold">Récapitulatif</h2>
         <p className="mt-3 text-sm text-muted">Montant</p>
         <p className="tabular text-2xl font-bold">{formatXof(amount)}</p>
-        <p className="mt-3 text-sm">{networkLabel(network)}</p>
+        <p className="mt-3 flex items-center gap-2 text-sm">
+          <PayLogo method={networkLogoMethod(network)} size={28} />
+          {networkLabel(network)}
+        </p>
         <p className="text-sm">{phoneOk ?? "Numéro à saisir"}</p>
         <p className="text-sm">{name.trim() || "Titulaire à saisir"}</p>
         <p className="mt-3 text-sm text-muted">Le montant reçu et les frais viennent du devis, pas d'un calcul dans l'application.</p>
@@ -254,8 +264,11 @@ export function PayoutConfirmPage() {
         </div>
         <div>
           <p className="text-sm">Taux {quote.exchangeRate} · frais {quote.fees}</p>
-          <p className="text-sm">
-            {networkLabel(quote.network)} · {quote.accountNumberMasked} · {quote.accountName}
+          <p className="flex items-center gap-2 text-sm">
+            <PayLogo method={networkLogoMethod(quote.network)} size={28} />
+            <span>
+              {networkLabel(quote.network)} · {quote.accountNumberMasked} · {quote.accountName}
+            </span>
           </p>
         </div>
       </div>

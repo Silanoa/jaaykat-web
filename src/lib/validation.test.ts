@@ -89,7 +89,8 @@ describe("payoutAmountError", () => {
   });
 
   it("compare au solde renvoyé par l'API", () => {
-    expect(payoutAmountError(3000, 2500)).toBe("Solde insuffisant");
+    expect(payoutAmountError(3000, 2500)).toBe("Solde retirable insuffisant : 2\u202f500\u00a0F");
+    expect(payoutAmountError(3000, 0)).toBe("Solde retirable insuffisant : 0\u00a0F");
     expect(payoutAmountError(3000, null)).toBeNull();
   });
 });

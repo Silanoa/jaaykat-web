@@ -1,3 +1,4 @@
+import { formatXof } from "./format";
 const NBSP = "\u00A0";
 const PHONE = /^(\+?221[7]\d{8}|[7]\d{8})$/;
 
@@ -86,6 +87,6 @@ export function payoutAmountError(amount: number, balance: number | null): strin
   if (!Number.isInteger(amount) || amount < 100 || amount > 200_000) {
     return `Entre 100 et 200${NBSP}000${NBSP}F`;
   }
-  if (balance !== null && amount > balance) return "Solde insuffisant";
+  if (balance !== null && amount > balance) return `Solde retirable insuffisant : ${formatXof(Math.max(0, balance))}`;
   return null;
 }
